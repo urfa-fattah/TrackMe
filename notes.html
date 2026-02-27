@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackMe · Notes Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #06b6d4;
+            --bg-dark: #050505;
+            --card-bg: rgba(15, 15, 25, 0.7);
+        }
+
+        body {
+            background: radial-gradient(circle at 50% -20%, #1e1b4b, #050505);
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glow-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .glow-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+        }
+
+        .gradient-border {
+            position: relative;
+            border-radius: 12px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            padding: 1px;
+        }
+
+        .gradient-content {
+            background: #0a0a0a;
+            border-radius: 11px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+            gap: 0.75rem;
+            margin: 2rem 0;
+        }
+        .feature-item {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: 24px;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            backdrop-filter: blur(8px);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .note-card {
+            background: rgba(10, 10, 20, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: 0.2s;
+        }
+        .note-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px -10px var(--primary);
+        }
+        .note-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #1e1b2b;
+        }
+        .delete-btn {
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+        .delete-btn:hover {
+            opacity: 1;
+            color: #ef4444;
+        }
+        .aura {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: pulse-slow 8s infinite;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body class="pb-24">
+    <div class="aura" style="top: -200px; right: -200px;"></div>
+    <div class="aura" style="bottom: -200px; left: -200px; background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);"></div>
+
+    <!-- ========== NAVBAR (same as index) ========== -->
+    <nav class="max-w-6xl mx-auto px-4 pt-6 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i data-lucide="goal" class="w-5 h-5 text-indigo-400"></i>
+            <span class="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-cyan-300">TrackMe</span>
+        </div>
+        <!-- Desktop -->
+        <div class="hidden md:flex gap-6 text-sm font-medium">
+            <a href="index.html" class="text-indigo-300 hover:text-white transition-colors">Home</a>
+            <a href="notes.html" class="text-white border-b-2 border-indigo-500 pb-1">Notes</a>
+            <a href="about.html" class="text-indigo-300 hover:text-white transition-colors">About</a>
+        </div>
+        <!-- Mobile hamburger -->
+        <div class="md:hidden">
+            <button id="menu-btn" class="text-indigo-300 focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </nav>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-black/80 backdrop-blur-lg mt-2 rounded-xl mx-4 p-4 border border-indigo-500/30">
+        <a href="index.html" class="block py-2 text-indigo-300 hover:text-white border-b border-indigo-500/30">Home</a>
+        <a href="notes.html" class="block py-2 text-white">Notes</a>
+        <a href="about.html" class="block py-2 text-indigo-300 hover:text-white">About</a>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-10">
+        <!-- Header -->
+        <header class="mb-10">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-500/50">
+                    <i data-lucide="notebook-pen" class="w-6 h-6 text-white"></i>
+                </div>
+                <h1 class="text-5xl font-extrabold tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-500">
+                    NOTES GALLERY
+                </h1>
+            </div>
+            <p class="text-indigo-300/60 font-medium ml-1">Store formulas, diagrams & important topics as images</p>
+            <p class="text-indigo-200/80 max-w-2xl mt-2 text-sm">Upload pictures of your handwritten notes, textbook pages, or whiteboards. Keep them organised by subject and title.</p>
+        </header>
+
+        <!-- ===== 10 IMPORTANT FEATURES FOR STUDENTS ===== -->
+        <section class="my-12">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i data-lucide="sparkles" class="text-indigo-400"></i> Essential student tools</h2>
+            <div class="feature-grid">
+                <div class="feature-item"><i data-lucide="image" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Image notes</div>
+                <div class="feature-item"><i data-lucide="folder" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Subject folders</div>
+                <div class="feature-item"><i data-lucide="tag" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Title & tags</div>
+                <div class="feature-item"><i data-lucide="search" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Instant search</div>
+                <div class="feature-item"><i data-lucide="filter" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Filter by subject</div>
+                <div class="feature-item"><i data-lucide="calendar" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Date stamps</div>
+                <div class="feature-item"><i data-lucide="trash-2" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Delete notes</div>
+                <div class="feature-item"><i data-lucide="download" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Export backup</div>
+                <div class="feature-item"><i data-lucide="upload" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Import notes</div>
+                <div class="feature-item"><i data-lucide="eye" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Lightbox preview</div>
+            </div>
+        </section>
+
+        <!-- Upload form -->
+        <div class="gradient-border mb-10">
+            <div class="gradient-content p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="upload-cloud" class="text-indigo-400"></i> Add new image note</h2>
+                <form id="noteForm" onsubmit="event.preventDefault(); addNote();">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-indigo-300 text-sm block mb-1">Subject</label>
+                            <input type="text" id="noteSubject" placeholder="e.g. Mathematics, Physics" required
+                                class="w-full bg-black/40 border border-indigo-800/50 rounded-lg p-3 text-white placeholder-indigo-300/30 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="text-indigo-300 text-sm block mb-1">Title</label>
+                            <input type="text" id="noteTitle" placeholder="e.g. Schrödinger equation" required
+                                class="w-full bg-black/40 border border-indigo-800/50 rounded-lg p-3 text-white placeholder-indigo-300/30 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="text-indigo-300 text-sm block mb-1">Image (max 2MB)</label>
+                        <input type="file" id="noteImage" accept="image/*" required
+                            class="w-full text-indigo-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700">
+                    </div>
+                    <div class="mt-4">
+                        <label class="text-indigo-300 text-sm block mb-1">Description (optional)</label>
+                        <textarea id="noteDesc" rows="2" placeholder="Any additional details..."
+                            class="w-full bg-black/40 border border-indigo-800/50 rounded-lg p-3 text-white placeholder-indigo-300/30 resize-none"></textarea>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                            Save note
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search & filter bar -->
+        <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-8">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-indigo-300 text-sm uppercase tracking-wider">Filter by subject:</span>
+                <select id="subjectFilter" class="bg-indigo-900/40 text-indigo-200 px-4 py-2 rounded-lg outline-none border border-white/10">
+                    <option value="all">All subjects</option>
+                </select>
+            </div>
+            <div class="relative w-full md:w-64">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400 w-4 h-4"></i>
+                <input type="text" id="searchNotes" placeholder="Search by title..." 
+                    class="w-full bg-black/40 border border-indigo-800/50 rounded-full py-2 pl-10 pr-4 text-white placeholder-indigo-300/30 focus:outline-none focus:border-indigo-500">
+            </div>
+        </div>
+
+        <!-- Notes grid container -->
+        <div id="notesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[200px]"></div>
+
+        <!-- Clear all button (only if notes exist) -->
+        <div id="clearAllContainer" class="text-center mt-10 hidden">
+            <button onclick="clearAllNotes()" class="text-red-400 hover:text-red-300 text-sm flex items-center gap-1 mx-auto">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Delete all notes
+            </button>
+        </div>
+    </div>
+
+    <!-- Lightbox modal (simple) -->
+    <div id="lightbox" class="fixed inset-0 bg-black/90 backdrop-blur-lg z-[200] hidden items-center justify-center" onclick="this.style.display='none'">
+        <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain p-4">
+    </div>
+
+    <!-- Footer (same as index) -->
+    <footer class="max-w-6xl mx-auto px-4 mt-20 pt-8 border-t border-indigo-800/30">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-indigo-300/70">
+            <div class="flex gap-6">
+                <a href="index.html" class="hover:text-indigo-200 transition">Home</a>
+                <a href="notes.html" class="hover:text-indigo-200 transition">Notes</a>
+                <a href="about.html" class="hover:text-indigo-200 transition">About</a>
+            </div>
+            <div class="text-center md:text-right">
+                <p class="flex items-center gap-2"><i data-lucide="copyright" class="w-4 h-4"></i> 2025 Urfa Hasan Fattah. All rights reserved.</p>
+                <p class="text-xs text-indigo-500/50 mt-1">Built with TrackMe engine</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu
+        document.getElementById('menu-btn')?.addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // ========== NOTES STORAGE ==========
+        let notes = JSON.parse(localStorage.getItem('lumina_notes')) || [];
+
+        // DOM elements
+        const notesContainer = document.getElementById('notesContainer');
+        const subjectFilter = document.getElementById('subjectFilter');
+        const searchInput = document.getElementById('searchNotes');
+        const clearAllContainer = document.getElementById('clearAllContainer');
+
+        // Populate subject filter dropdown
+        function updateSubjectFilter() {
+            const subjects = [...new Set(notes.map(n => n.subject))];
+            subjectFilter.innerHTML = '<option value="all">All subjects</option>';
+            subjects.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub;
+                option.textContent = sub;
+                subjectFilter.appendChild(option);
+            });
+        }
+
+        // Render notes based on filter & search
+        function renderNotes() {
+            const selectedSubject = subjectFilter.value;
+            const searchTerm = searchInput.value.toLowerCase();
+
+            let filtered = notes;
+            if (selectedSubject !== 'all') {
+                filtered = filtered.filter(n => n.subject === selectedSubject);
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(n => n.title.toLowerCase().includes(searchTerm));
+            }
+
+            if (filtered.length === 0) {
+                notesContainer.innerHTML = `
+                    <div class="col-span-full text-center py-20 border-2 border-dashed border-indigo-500/20 rounded-3xl">
+                        <i data-lucide="file-image" class="w-12 h-12 text-indigo-500/30 mx-auto mb-4"></i>
+                        <p class="text-indigo-300/40 font-medium">No notes found. Add your first image note above.</p>
+                    </div>
+                `;
+                clearAllContainer.classList.add('hidden');
+            } else {
+                notesContainer.innerHTML = filtered.map(note => `
+                    <div class="note-card glow-card" data-id="${note.id}">
+                        <div class="relative">
+                            <img src="${note.imageData}" alt="${note.title}" class="note-img cursor-pointer" onclick="openLightbox('${note.imageData}')">
+                            <button onclick="deleteNote('${note.id}')" class="delete-btn absolute top-2 right-2 bg-black/60 p-2 rounded-full text-indigo-300 hover:text-red-400">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-bold text-indigo-400 bg-indigo-900/40 px-2 py-1 rounded-full">${note.subject}</span>
+                                <span class="text-[10px] text-indigo-500/50">${new Date(note.date).toLocaleDateString()}</span>
+                            </div>
+                            <h3 class="text-lg font-bold mt-2">${note.title}</h3>
+                            ${note.description ? `<p class="text-indigo-300/60 text-sm mt-1 line-clamp-2">${note.description}</p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                clearAllContainer.classList.remove('hidden');
+            }
+            lucide.createIcons(); // refresh icons inside dynamic content
+        }
+
+        // Add new note
+        function addNote() {
+            const subject = document.getElementById('noteSubject').value.trim();
+            const title = document.getElementById('noteTitle').value.trim();
+            const file = document.getElementById('noteImage').files[0];
+            const description = document.getElementById('noteDesc').value.trim();
+
+            if (!subject || !title || !file) {
+                alert('Please fill subject, title and select an image.');
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image must be less than 2MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const newNote = {
+                    id: crypto.randomUUID(),
+                    subject,
+                    title,
+                    description,
+                    imageData: e.target.result,
+                    date: new Date().toISOString()
+                };
+                notes.push(newNote);
+                localStorage.setItem('lumina_notes', JSON.stringify(notes));
+                document.getElementById('noteForm').reset();
+                updateSubjectFilter();
+                renderNotes();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Delete single note
+        window.deleteNote = function(id) {
+            if (confirm('Delete this note?')) {
+                notes = notes.filter(n => n.id !== id);
+                localStorage.setItem('lumina_notes', JSON.stringify(notes));
+                updateSubjectFilter();
+                renderNotes();
+            }
+        };
+
+        // Clear all notes
+        window.clearAllNotes = function() {
+            if (confirm('Delete ALL notes? This cannot be undone.')) {
+                notes = [];
+                localStorage.setItem('lumina_notes', JSON.stringify(notes));
+                updateSubjectFilter();
+                renderNotes();
+            }
+        };
+
+        // Lightbox
+        window.openLightbox = function(src) {
+            const lb = document.getElementById('lightbox');
+            document.getElementById('lightboxImg').src = src;
+            lb.style.display = 'flex';
+        };
+
+        // Event listeners
+        subjectFilter.addEventListener('change', renderNotes);
+        searchInput.addEventListener('input', renderNotes);
+
+        // Initialise
+        updateSubjectFilter();
+        renderNotes();
+    </script>
+</body>
+</html>
