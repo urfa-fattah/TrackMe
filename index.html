@@ -87,7 +87,6 @@
         }
         .mobile-nav { position: absolute; top: 80px; right: 20px; left:20px; background: #0f0f1a; border-radius: 2rem; padding: 1.5rem; border: 1px solid rgba(139,92,246,0.3); backdrop-filter: blur(20px); z-index: 100; display: none; }
         .mobile-nav.show { display: block; }
-        /* daily subtags chips inside active sprints */
         .daily-badge {
             background: rgba(139,92,246,0.2);
             border-radius: 40px;
@@ -98,13 +97,13 @@
             color: #a78bfa;
             text-transform: uppercase;
         }
+        .daily-focus-bg { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
     </style>
 </head>
 <body class="pb-24">
     <div class="aura" style="top: -200px; right: -200px;"></div>
     <div class="aura" style="bottom: -200px; left: -200px; background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);"></div>
 
-    <!-- Navbar with hamburger + lang toggle -->
     <nav class="max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center relative">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -115,7 +114,6 @@
             </span>
         </div>
 
-        <!-- Desktop right items -->
         <div class="hidden md:flex gap-8 text-sm font-medium items-center">
             <a href="#" class="text-white border-b-2 border-indigo-500 pb-1" data-i18n="home">Dashboard</a>
             <a href="#" class="text-indigo-300 hover:text-white transition-colors" onclick="openNotesModal();return false;" data-i18n="notes">Resources</a>
@@ -131,7 +129,6 @@
             </button>
         </div>
 
-        <!-- Hamburger + mobile buttons -->
         <div class="flex items-center gap-2 hamburger-menu">
             <button onclick="toggleLanguage()" class="p-2 bg-indigo-500/20 hover:bg-indigo-500/40 rounded-full transition">
                 <i data-lucide="languages" class="w-4 h-4"></i>
@@ -141,7 +138,6 @@
             </button>
         </div>
 
-        <!-- Mobile dropdown menu -->
         <div id="mobileMenu" class="mobile-nav">
             <div class="flex flex-col gap-4">
                 <a href="#" class="text-white text-lg font-medium" onclick="closeMobileMenu();" data-i18n="home">Home</a>
@@ -155,7 +151,6 @@
         </div>
     </nav>
 
-    <!-- Main content -->
     <div class="max-w-7xl mx-auto px-6 pt-10">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
             <div class="lg:col-span-4 space-y-6">
@@ -189,16 +184,14 @@
                             <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span></span>
                             <h2 class="font-bold text-lg" data-i18n="activeSprints">Daily sprints</h2>
                         </div>
-                        <span class="text-xs text-indigo-300/50 uppercase tracking-widest" data-i18n="priorityDeadline">Today / tomorrow</span>
+                        <span class="text-xs text-indigo-300/50 uppercase tracking-widest" data-i18n="priorityDeadline">Pinned & Deadlines</span>
                     </div>
                     <div id="active-targets-container" class="flex-1 overflow-y-auto max-h-[220px] pr-2 space-y-3">
-                        <!-- dynamic content: grouped by today / tomorrow -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
 
-        <!-- Add Module -->
         <section class="mb-12">
             <div class="bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 p-[1px] rounded-2xl">
                 <div class="bg-[#0a0a0f] rounded-2xl p-3 flex flex-col md:flex-row gap-3">
@@ -220,31 +213,31 @@
             </div>
         </section>
 
-        <!-- Advanced Filter Bar (more specific) -->
         <div class="bg-white/5 border border-white/10 rounded-3xl p-4 flex flex-col lg:flex-row gap-4 items-center justify-between mb-8">
             <div class="flex flex-wrap gap-2 items-center">
                 <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="all">All</span>
+                <span class="filter-chip" data-filter="daily" onclick="setFilter('daily')" data-i18n="dailyFilter">⭐ Daily Target</span>
                 <span class="filter-chip" data-filter="priority1" onclick="setFilter('priority1')" data-i18n="critical">🔥 Critical</span>
                 <span class="filter-chip" data-filter="priority2" onclick="setFilter('priority2')" data-i18n="standard">⚡ Standard</span>
                 <span class="filter-chip" data-filter="completed" onclick="setFilter('completed')" data-i18n="done">✓ Done</span>
                 <span class="filter-chip" data-filter="incomplete" onclick="setFilter('incomplete')" data-i18n="pending">⏳ Pending</span>
-                <!-- advanced filters -->
-                <span class="filter-chip" id="filterHasNotes" onclick="toggleAdvancedFilter('hasNotes')" data-i18n="withNotes">📝 Has notes</span>
-                <span class="filter-chip" id="filterHasDeadline" onclick="toggleAdvancedFilter('hasDeadline')" data-i18n="withDeadline">⏰ Has deadline</span>
-                <span class="filter-chip" id="filterLeafOnly" onclick="toggleAdvancedFilter('leafOnly')" data-i18n="subtasksOnly">🔹 Subtasks only</span>
+                
+                <div class="w-px h-6 bg-white/10 mx-2 hidden lg:block"></div>
+                
+                <span class="filter-chip" id="filterHasNotes" onclick="toggleAdvancedFilter('hasNotes')" data-i18n="withNotes">📝 Notes</span>
+                <span class="filter-chip" id="filterHasDeadline" onclick="toggleAdvancedFilter('hasDeadline')" data-i18n="withDeadline">⏰ Deadlines</span>
+                <span class="filter-chip" id="filterLeafOnly" onclick="toggleAdvancedFilter('leafOnly')" data-i18n="subtasksOnly">🔹 Subtasks</span>
             </div>
-            <div class="relative w-full lg:w-96">
+            <div class="relative w-full lg:w-80 shrink-0">
                 <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400/50 w-4 h-4"></i>
                 <input type="text" id="search-input" placeholder="🔍 Search targets, notes..." class="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder-indigo-300/20 focus:outline-none focus:border-indigo-500/50">
             </div>
         </div>
 
-        <!-- Roadmap container (children sorted by due date) -->
         <div id="roadmap-engine" class="space-y-6"></div>
     </div>
 
-    <!-- Modals: Subtarget, Notes, About -->
-    <div id="subtargetModal" class="modal-overlay"><!-- filled via JS --></div>
+    <div id="subtargetModal" class="modal-overlay"></div>
     <div id="notesModal" class="modal-overlay">
         <div class="glow-card max-w-2xl w-full rounded-[2.5rem] p-8 max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -261,42 +254,41 @@
                 <button onclick="closeAboutModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <p class="text-indigo-200/70 mb-4" data-i18n="aboutText">Advanced syllabus architect with sub-target sprints, focus timer, and multilingual UI. Built for deep work.</p>
-            <p class="text-xs text-indigo-400/50">v2.1 · daily subtargets · date-sorted</p>
+            <p class="text-xs text-indigo-400/50">v2.5 · daily subtargets · explicit sprint tracking</p>
         </div>
     </div>
 
-    <!-- Pomodoro timer (original, unchanged) -->
     <div id="pomodoro" class="fixed bottom-8 right-8 glow-card p-4 rounded-[2rem] border-indigo-500/40 flex items-center gap-4 z-50 shadow-2xl group">
         <div class="relative"><svg class="w-14 h-14 transform -rotate-90"><circle cx="28" cy="28" r="24" stroke="currentColor" stroke-width="3" fill="transparent" class="text-white/5" /><circle id="timer-progress" cx="28" cy="28" r="24" stroke="currentColor" stroke-width="3" fill="transparent" stroke-dasharray="150.8" stroke-dashoffset="0" class="text-indigo-500 transition-all duration-1000" /></svg><div class="absolute inset-0 flex items-center justify-center font-bold text-xs" id="timer-display">25:00</div></div>
         <div class="pr-2"><p class="text-[9px] uppercase font-black text-indigo-400 tracking-tighter" data-i18n="focusSession">Focus Session</p><div class="flex gap-3 mt-1"><button onclick="toggleTimer()" id="timer-btn" class="hover:text-white text-indigo-300 transition"><i data-lucide="play" class="w-4 h-4 fill-current"></i></button><button onclick="resetTimer()" class="hover:text-white text-indigo-300 transition"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div></div>
     </div>
 
     <script>
-        // ---------- LANGUAGE TRANSLATIONS (extended) ----------
+        // ---------- LANGUAGE TRANSLATIONS ----------
         const translations = {
             en: {
                 brand: 'TrackMe', home: 'Home', notes: 'Notes', about: 'About',
                 focus: 'Focus', center: 'Center', subtitle: 'Your roadmap intelligence dashboard. Track sub-targets and hit deadlines with precision.',
                 totalProgress: 'Total Progress', activeModules: 'Active Modules',
-                activeSprints: 'Daily sprints', priorityDeadline: 'Today / tomorrow',
+                activeSprints: 'Daily sprints', priorityDeadline: 'Pinned & Deadlines',
                 high: 'High Priority', med: 'Med Priority', low: 'Low Priority',
-                initialize: 'Initialize', all: 'All', critical: '🔥 Critical', standard: '⚡ Standard',
-                done: '✓ Done', pending: '⏳ Pending', withNotes: '📝 Has notes', withDeadline: '⏰ Has deadline',
-                subtasksOnly: '🔹 Subtasks only', allNotes: 'All Notes & Resources', aboutTitle: 'TrackMe Pro',
+                initialize: 'Initialize', all: 'All', dailyFilter: '⭐ Daily Target', critical: '🔥 Critical', standard: '⚡ Standard',
+                done: '✓ Done', pending: '⏳ Pending', withNotes: '📝 Notes', withDeadline: '⏰ Deadlines',
+                subtasksOnly: '🔹 Subtasks', allNotes: 'All Notes & Resources', aboutTitle: 'TrackMe Pro',
                 aboutText: 'Advanced syllabus architect with sub-target sprints, focus timer, and multilingual UI. Built for deep work.',
-                today: 'Today', tomorrow: 'Tomorrow', noActive: 'No daily subtasks'
+                daily: 'Daily Focus', today: 'Today', tomorrow: 'Tomorrow', noActive: 'No active daily targets'
             },
             bn: {
                 brand: 'ট্র্যাকমি', home: 'হোম', notes: 'নোট', about: 'সম্পর্কে',
                 focus: 'ফোকাস', center: 'সেন্টার', subtitle: 'আপনার রোডম্যাপ ইন্টেলিজেন্স ড্যাশবোর্ড। সাব-টার্গেট ট্র্যাক করুন এবং সময়সীমা নির্ভুলভাবে পূরণ করুন।',
                 totalProgress: 'মোট অগ্রগতি', activeModules: 'সক্রিয় মডিউল',
-                activeSprints: 'দৈনিক স্প্রিন্ট', priorityDeadline: 'আজ / আগামীকাল',
+                activeSprints: 'দৈনিক স্প্রিন্ট', priorityDeadline: 'পিন করা ও সময়সীমা',
                 high: 'উচ্চ অগ্রাধিকার', med: 'মাঝারি অগ্রাধিকার', low: 'নিম্ন অগ্রাধিকার',
-                initialize: 'শুরু করুন', all: 'সব', critical: '🔥 জরুরি', standard: '⚡ সাধারণ',
-                done: '✓ সম্পন্ন', pending: '⏳ অপেক্ষমান', withNotes: '📝 নোট আছে', withDeadline: '⏰ সময়সীমা আছে',
-                subtasksOnly: '🔹 সাবটাস্ক শুধু', allNotes: 'সব নোট ও রিসোর্স', aboutTitle: 'ট্র্যাকমি প্রো',
+                initialize: 'শুরু করুন', all: 'সব', dailyFilter: '⭐ দৈনিক লক্ষ্য', critical: '🔥 জরুরি', standard: '⚡ সাধারণ',
+                done: '✓ সম্পন্ন', pending: '⏳ অপেক্ষমান', withNotes: '📝 নোট', withDeadline: '⏰ সময়সীমা',
+                subtasksOnly: '🔹 সাবটাস্ক', allNotes: 'সব নোট ও রিসোর্স', aboutTitle: 'ট্র্যাকমি প্রো',
                 aboutText: 'উন্নত সিলেবাস আর্কিটেক্ট যা সাব-টার্গেট স্প্রিন্ট, ফোকাস টাইমার এবং বহুভাষিক ইন্টারফেস সহ। গভীর কাজের জন্য তৈরি।',
-                today: 'আজ', tomorrow: 'আগামীকাল', noActive: 'কোন দৈনিক সাবটাস্ক নেই'
+                daily: 'দৈনিক ফোকাস', today: 'আজ', tomorrow: 'আগামীকাল', noActive: 'কোন দৈনিক লক্ষ্য নেই'
             }
         };
         let currentLang = 'en';
@@ -319,7 +311,7 @@
                 prioritySelect.options[1].text = translations[currentLang].med;
                 prioritySelect.options[2].text = translations[currentLang].low;
             }
-            renderActiveTargets(); // refresh with new labels
+            renderActiveTargets(); 
         }
 
         // ---------- MOBILE MENU ----------
@@ -332,14 +324,14 @@
         }
 
         // ---------- DATA & STATE ----------
-        let syllabusData = JSON.parse(localStorage.getItem('trackme_pro_v5')) || [];
+        let syllabusData = JSON.parse(localStorage.getItem('trackme_pro_v6')) || [];
         let currentFilter = 'all';
         let searchTerm = '';
         let currentParentId = null;
         let advFilters = { hasNotes: false, hasDeadline: false, leafOnly: false };
 
         function save() {
-            localStorage.setItem('trackme_pro_v5', JSON.stringify(syllabusData));
+            localStorage.setItem('trackme_pro_v6', JSON.stringify(syllabusData));
             render(); renderActiveTargets();
         }
 
@@ -349,7 +341,6 @@
             return Math.round(total / item.children.length);
         }
 
-        // advanced filter toggles
         function toggleAdvancedFilter(type) {
             advFilters[type] = !advFilters[type];
             const chip = document.getElementById(`filter${type.charAt(0).toUpperCase()+type.slice(1)}`);
@@ -372,6 +363,7 @@
                     if (currentFilter === 'priority2') return item.priority === 2;
                     if (currentFilter === 'completed') return getProgress(item) === 100;
                     if (currentFilter === 'incomplete') return getProgress(item) < 100;
+                    if (currentFilter === 'daily') return item.isDaily || (item.children && item.children.some(c => c.isDaily));
                     return true;
                 });
             }
@@ -391,71 +383,109 @@
             return filtered;
         }
 
-        // ----- ACTIVE SPRINTS: TODAY / TOMORROW GROUPS -----
+        // ----- ACTIVE SPRINTS: DAILY / TODAY / TOMORROW GROUPS -----
         function renderActiveTargets() {
             const container = document.getElementById('active-targets-container');
-            let activeItems = [];
+            let dailyPinnedItems = [];
+            let deadlineItems = [];
 
-            const collectLeafIncomplete = (items, parentTitle = '') => {
+            const collectFocusItems = (items, parentTitle = '') => {
                 items.forEach(item => {
-                    // leaf, incomplete, and has dueDate (daily subtasks)
-                    if (!item.completed && item.children.length === 0 && item.dueDate) {
-                        activeItems.push({ ...item, parentTitle });
+                    if (!item.completed) {
+                        // Gather items explicitly marked as daily targets
+                        if (item.isDaily) {
+                            dailyPinnedItems.push({ ...item, parentTitle });
+                        } 
+                        // Gather subtasks with impending deadlines (if not already pinned)
+                        else if (item.children.length === 0 && item.dueDate) {
+                            deadlineItems.push({ ...item, parentTitle });
+                        }
                     }
-                    if (item.children.length) collectLeafIncomplete(item.children, item.title);
+                    if (item.children.length) collectFocusItems(item.children, item.title);
                 });
             };
-            collectLeafIncomplete(syllabusData);
+            collectFocusItems(syllabusData);
 
-            // date strings
             const today = new Date(); today.setHours(0,0,0,0);
             const todayStr = today.toISOString().split('T')[0];
             const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
             const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-            const todayItems = activeItems.filter(i => i.dueDate === todayStr);
-            const tomorrowItems = activeItems.filter(i => i.dueDate === tomorrowStr);
-            const laterItems = activeItems.filter(i => i.dueDate && i.dueDate !== todayStr && i.dueDate !== tomorrowStr).slice(0,2); // limit
+            const todayItems = deadlineItems.filter(i => i.dueDate === todayStr);
+            const tomorrowItems = deadlineItems.filter(i => i.dueDate === tomorrowStr);
 
-            function renderItem(item) {
+            function renderSprintItem(item, isPinned = false) {
                 const overdue = item.dueDate && new Date(item.dueDate) < new Date().setHours(0,0,0,0);
-                return `<div class="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition">
-                    <div class="overflow-hidden"><p class="text-[9px] text-indigo-400 font-black uppercase truncate">${item.parentTitle || '🔹'}</p>
-                    <h4 class="text-sm font-bold text-white truncate">${item.title}</h4>
-                    <div class="flex gap-2 mt-1"><span class="text-[9px] ${overdue?'text-red-400':'text-indigo-300/50'} font-bold">BY ${item.dueDate}</span></div></div>
-                    <button onclick="toggleComplete('${item.id}')" class="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500 transition"><i data-lucide="check" class="w-4 h-4 text-white"></i></button>
+                const bgClass = isPinned ? 'daily-focus-bg border-yellow-500/30' : 'bg-black/40 border-white/5';
+                
+                return `<div class="${bgClass} border p-3 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition">
+                    <div class="overflow-hidden">
+                        <p class="text-[9px] text-indigo-400 font-black uppercase truncate">${item.parentTitle || '🔹 ROOT TARGET'}</p>
+                        <h4 class="text-sm font-bold text-white truncate flex items-center gap-2">
+                            ${isPinned ? '⭐' : ''} ${item.title}
+                        </h4>
+                        <div class="flex gap-2 mt-1">
+                            ${item.dueDate ? `<span class="text-[9px] ${overdue?'text-red-400':'text-indigo-300/50'} font-bold">BY ${item.dueDate}</span>` : `<span class="text-[9px] text-indigo-300/30 font-bold">NO DEADLINE</span>`}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${isPinned ? `<button onclick="toggleDailyTarget('${item.id}')" class="w-8 h-8 rounded-full border border-yellow-500/30 flex items-center justify-center hover:bg-yellow-500/20 transition"><i data-lucide="star-off" class="w-4 h-4 text-yellow-500"></i></button>` : ''}
+                        <button onclick="toggleComplete('${item.id}')" class="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500 transition"><i data-lucide="check" class="w-4 h-4 text-white"></i></button>
+                    </div>
                 </div>`;
             }
 
             let html = '';
+            
+            // Render Pinned Daily Focus First
+            if (dailyPinnedItems.length) {
+                html += `<div><span class="daily-badge bg-yellow-500/20 text-yellow-400"><i data-lucide="star" class="w-3 h-3 inline mr-1 fill-current"></i> ${translations[currentLang].daily}</span><div class="space-y-2 mt-2">${dailyPinnedItems.map(i => renderSprintItem(i, true)).join('')}</div></div>`;
+            }
+
+            // Render Today's Deadlines
             if (todayItems.length) {
-                html += `<div><span class="daily-badge"><i data-lucide="sun" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].today}</span><div class="space-y-2 mt-2">${todayItems.map(renderItem).join('')}</div></div>`;
+                html += `<div class="mt-4"><span class="daily-badge"><i data-lucide="sun" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].today}</span><div class="space-y-2 mt-2">${todayItems.map(i => renderSprintItem(i, false)).join('')}</div></div>`;
             }
+            
+            // Render Tomorrow's Deadlines
             if (tomorrowItems.length) {
-                html += `<div class="mt-3"><span class="daily-badge"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].tomorrow}</span><div class="space-y-2 mt-2">${tomorrowItems.map(renderItem).join('')}</div></div>`;
+                html += `<div class="mt-4"><span class="daily-badge"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].tomorrow}</span><div class="space-y-2 mt-2">${tomorrowItems.map(i => renderSprintItem(i, false)).join('')}</div></div>`;
             }
-            if (laterItems.length && todayItems.length + tomorrowItems.length < 3) {
-                html += `<div class="mt-3"><span class="daily-badge">📅 upcoming</span><div class="space-y-2 mt-2">${laterItems.map(renderItem).join('')}</div></div>`;
-            }
+            
             if (!html) {
-                html = `<div class="col-span-full flex flex-col items-center py-8 text-indigo-300/30"><i data-lucide="zap-off" class="w-6 h-6 mb-2"></i><p class="text-xs uppercase tracking-widest font-bold" data-i18n="noActive">No daily subtasks</p></div>`;
+                html = `<div class="col-span-full flex flex-col items-center py-8 text-indigo-300/30"><i data-lucide="zap-off" class="w-6 h-6 mb-2"></i><p class="text-xs uppercase tracking-widest font-bold" data-i18n="noActive">No active daily targets</p></div>`;
             }
             container.innerHTML = html;
             lucide.createIcons();
         }
 
-        // ----- TOGGLE, DELETE, ADD ROOT (unchanged) -----
+        // ----- TOGGLE ACTIONS & CORE FUNCTIONS -----
         function toggleComplete(id) {
             const proc = (items) => {
                 for (let item of items) {
-                    if (item.id === id) { item.completed = !item.completed; if(item.completed) confetti({particleCount:80,spread:60,colors:['#8b5cf6']}); return true; }
+                    if (item.id === id) { 
+                        item.completed = !item.completed; 
+                        if(item.completed) confetti({particleCount:80,spread:60,colors:['#8b5cf6', '#06b6d4', '#f59e0b']}); 
+                        return true; 
+                    }
                     if (item.children && proc(item.children)) return true;
                 }
             };
             proc(syllabusData); save();
         }
+        
+        function toggleDailyTarget(id) {
+            const proc = (items) => {
+                for (let item of items) {
+                    if (item.id === id) { item.isDaily = !item.isDaily; return true; }
+                    if (item.children && proc(item.children)) return true;
+                }
+            };
+            proc(syllabusData); save();
+        }
+
         function deleteItem(id) {
-            if (!confirm('Remove?')) return;
+            if (!confirm('Remove this target?')) return;
             const proc = (items) => {
                 for (let i=0; i<items.length; i++) {
                     if (items[i].id === id) { items.splice(i,1); return true; }
@@ -464,43 +494,65 @@
             };
             proc(syllabusData); save();
         }
+
         function addRootTarget() {
             const inp = document.getElementById('subject-input');
             const prio = document.getElementById('priority-input').value;
             if (!inp.value.trim()) return;
-            syllabusData.push({ id:crypto.randomUUID(), title:inp.value, completed:false, priority:parseInt(prio), children:[], notes:"", dueDate:null, createdAt:new Date().toISOString() });
-            inp.value=''; save();
+            syllabusData.push({ 
+                id: crypto.randomUUID(), title: inp.value, completed: false, 
+                priority: parseInt(prio), children: [], notes: "", dueDate: null, 
+                isDaily: false, createdAt: new Date().toISOString() 
+            });
+            inp.value = ''; save();
         }
-        function openChildModal(parentId) { currentParentId=parentId; document.getElementById('subtargetModal').style.display='grid'; }
-        function closeModal() { document.getElementById('subtargetModal').style.display='none'; document.getElementById('subtargetForm').reset(); currentParentId=null; }
+
+        // Subtarget modal functionality
+        function openChildModal(parentId) { 
+            currentParentId = parentId; 
+            document.getElementById('subtargetModal').style.display = 'grid'; 
+        }
+        function closeModal() { 
+            document.getElementById('subtargetModal').style.display = 'none'; 
+            document.getElementById('subtargetForm').reset(); 
+            currentParentId = null; 
+        }
         function saveSubtarget() {
             const title = document.getElementById('modalTitle').value.trim();
             if (!title || !currentParentId) return;
-            const newChild = { id:crypto.randomUUID(), title, completed:false, priority:parseInt(document.getElementById('modalPriority').value), children:[], notes:document.getElementById('modalNotes').value.trim(), dueDate:document.getElementById('modalDue').value||null };
+            const newChild = { 
+                id: crypto.randomUUID(), title, completed: false, 
+                priority: parseInt(document.getElementById('modalPriority').value), 
+                children: [], notes: document.getElementById('modalNotes').value.trim(), 
+                dueDate: document.getElementById('modalDue').value || null,
+                isDaily: document.getElementById('modalIsDaily').checked || false
+            };
             const find = (items) => {
                 for (let i of items) {
-                    if (i.id===currentParentId) { i.children.push(newChild); return true; }
+                    if (i.id === currentParentId) { i.children.push(newChild); return true; }
                     if (i.children && find(i.children)) return true;
                 }
             };
             find(syllabusData); closeModal(); save();
         }
+
         function exportData() { const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(syllabusData)); const a=document.createElement('a'); a.href=dataStr; a.download="roadmap.json"; a.click(); }
         function importData() {
             const input = document.createElement('input'); input.type='file'; input.accept='.json';
             input.onchange = e => {
                 const file = e.target.files[0]; const reader = new FileReader();
-                reader.onload = e => { try { syllabusData = JSON.parse(e.target.result); save(); } catch (er) { alert('Invalid json'); } };
+                reader.onload = e => { try { syllabusData = JSON.parse(e.target.result); save(); } catch (er) { alert('Invalid json file'); } };
                 reader.readAsText(file);
             }; input.click();
         }
 
-        // ----- RENDER MAIN ROADMAP with children sorted by dueDate -----
+        // ----- RENDER MAIN ROADMAP (Recursive) -----
         function generateHTML(item, isRoot=false) {
             const progress = getProgress(item);
-            const prioClass = {1:'border-l-red-500',2:'border-l-indigo-500',3:'border-l-cyan-500'}[item.priority]||'border-l-indigo-500';
+            const prioClass = {1:'border-l-red-500', 2:'border-l-indigo-500', 3:'border-l-cyan-500'}[item.priority] || 'border-l-indigo-500';
+            const dailyClass = item.isDaily ? 'border border-yellow-500/30' : '';
 
-            // sort children by dueDate (ascending, nulls at end)
+            // sort children by dueDate
             const sortedChildren = item.children ? [...item.children].sort((a,b) => {
                 if (!a.dueDate && !b.dueDate) return 0;
                 if (!a.dueDate) return 1;
@@ -509,22 +561,54 @@
             }) : [];
 
             return `
-                <div class="${isRoot?'mb-6':'mt-4 relative ml-6'}">
-                    ${!isRoot?'<div class="nested-line"></div>':''}
-                    <div class="glow-card rounded-3xl p-5 border-l-4 ${prioClass} ${item.completed?'opacity-60 grayscale-[0.5]':''}">
+                <div class="${isRoot ? 'mb-6' : 'mt-4 relative ml-6'}">
+                    ${!isRoot ? '<div class="nested-line"></div>' : ''}
+                    <div class="glow-card rounded-3xl p-5 border-l-4 ${prioClass} ${dailyClass} ${item.completed ? 'opacity-60 grayscale-[0.5]' : ''}">
                         <div class="flex flex-wrap items-center justify-between gap-4">
                             <div class="flex items-center gap-4 flex-1">
-                                <label class="cb-container cursor-pointer"><input type="checkbox" class="hidden" ${item.completed?'checked':''} onchange="toggleComplete('${item.id}')"><div class="checkmark w-6 h-6 border-2 border-white/10 rounded-lg transition-all flex items-center justify-center"><i data-lucide="check" class="w-3 h-3 text-white opacity-0"></i></div></label>
-                                <div><h3 class="font-bold ${item.completed?'line-through text-indigo-300/40':'text-white'}">${item.title}</h3>
-                                <div class="flex gap-3 text-[9px] uppercase font-black tracking-widest text-indigo-400/60 mt-1"><span>${item.children.length} Components</span>${item.dueDate?`<span class="text-indigo-400">📅 ${item.dueDate}</span>`:''}${item.notes?'<span class="text-cyan-400">● Notes</span>':''}</div></div>
+                                <label class="cb-container cursor-pointer shrink-0">
+                                    <input type="checkbox" class="hidden" ${item.completed ? 'checked' : ''} onchange="toggleComplete('${item.id}')">
+                                    <div class="checkmark w-6 h-6 border-2 border-white/10 rounded-lg transition-all flex items-center justify-center">
+                                        <i data-lucide="check" class="w-3 h-3 text-white opacity-0"></i>
+                                    </div>
+                                </label>
+                                
+                                <div>
+                                    <h3 class="font-bold flex items-center gap-2 ${item.completed ? 'line-through text-indigo-300/40' : 'text-white'}">
+                                        ${item.title} 
+                                    </h3>
+                                    <div class="flex flex-wrap gap-3 text-[9px] uppercase font-black tracking-widest text-indigo-400/60 mt-1">
+                                        ${item.isDaily ? '<span class="text-yellow-400">⭐ DAILY TARGET</span>' : ''}
+                                        ${item.children.length > 0 ? `<span>${item.children.length} Components</span>` : ''}
+                                        ${item.dueDate ? `<span class="text-indigo-400">📅 ${item.dueDate}</span>` : ''}
+                                        ${item.notes ? '<span class="text-cyan-400">● Notes</span>' : ''}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-6">
-                                <div class="flex flex-col items-end"><div class="w-24 bg-white/5 h-1.5 rounded-full overflow-hidden hidden sm:block mb-1"><div class="h-full progress-pill transition-all duration-500" style="width:${progress}%"></div></div><span class="text-[10px] font-black text-indigo-300">${progress}%</span></div>
-                                <div class="flex gap-1"><button onclick="openChildModal('${item.id}')" class="p-2 hover:bg-indigo-500/20 rounded-xl"><i data-lucide="plus" class="w-4 h-4"></i></button><button onclick="deleteItem('${item.id}')" class="p-2 hover:bg-red-500/20 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                            
+                            <div class="flex items-center gap-4 lg:gap-6 shrink-0">
+                                <div class="flex flex-col items-end">
+                                    <div class="w-24 bg-white/5 h-1.5 rounded-full overflow-hidden hidden sm:block mb-1">
+                                        <div class="h-full progress-pill transition-all duration-500" style="width:${progress}%"></div>
+                                    </div>
+                                    <span class="text-[10px] font-black text-indigo-300">${progress}%</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="toggleDailyTarget('${item.id}')" title="Mark as Daily Target" class="p-2 rounded-xl transition-colors ${item.isDaily ? 'bg-yellow-500/20 hover:bg-yellow-500/40' : 'hover:bg-yellow-500/10'}">
+                                        <i data-lucide="star" class="w-4 h-4 ${item.isDaily ? 'text-yellow-400 fill-yellow-400' : 'text-indigo-300'}"></i>
+                                    </button>
+                                    <button onclick="openChildModal('${item.id}')" title="Add Sub-Target" class="p-2 hover:bg-indigo-500/20 rounded-xl">
+                                        <i data-lucide="plus" class="w-4 h-4 text-indigo-300"></i>
+                                    </button>
+                                    <button onclick="deleteItem('${item.id}')" title="Delete" class="p-2 hover:bg-red-500/20 rounded-xl">
+                                        <i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        ${item.notes && !item.completed?`<div class="mt-3 text-xs text-indigo-200/50 bg-black/20 p-3 rounded-xl border border-white/5">${item.notes}</div>`:''}
-                        ${sortedChildren.length?`<div class="children-container">${sortedChildren.map(c=>generateHTML(c)).join('')}</div>`:''}
+                        ${item.notes && !item.completed ? `<div class="mt-4 text-xs text-indigo-200/60 bg-black/30 p-4 rounded-2xl border border-white/5 whitespace-pre-wrap">${item.notes}</div>` : ''}
+                        
+                        ${sortedChildren.length ? `<div class="children-container">${sortedChildren.map(c => generateHTML(c)).join('')}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -538,29 +622,10 @@
             } else {
                 container.innerHTML = filtered.map(i => generateHTML(i, true)).join('');
             }
-            document.getElementById('stat-total').innerText = (syllabusData.length? Math.round(syllabusData.reduce((a,i)=>a+getProgress(i),0)/syllabusData.length) :0)+'%';
+            document.getElementById('stat-total').innerText = (syllabusData.length ? Math.round(syllabusData.reduce((a,i)=>a+getProgress(i),0)/syllabusData.length) : 0) + '%';
             document.getElementById('stat-tasks').innerText = syllabusData.length;
             lucide.createIcons();
         }
-
-        // Notes modal
-        function openNotesModal() {
-            const container = document.getElementById('notesList');
-            const notes = [];
-            const extract = (items, parent='') => {
-                items.forEach(i => {
-                    if (i.notes) notes.push({ title: i.title, notes: i.notes, parent });
-                    if (i.children) extract(i.children, i.title);
-                });
-            };
-            extract(syllabusData);
-            container.innerHTML = notes.length? notes.map(n => `<div class="bg-white/5 p-4 rounded-2xl border border-white/10"><h4 class="font-bold text-indigo-300">${n.title} ${n.parent?`<span class="text-[10px] text-indigo-500/70"> (in ${n.parent})</span>`:''}</h4><p class="text-sm text-indigo-200/70 mt-1 whitespace-pre-wrap">${n.notes}</p></div>`).join('') : '<p class="text-indigo-300/30 text-center" data-i18n="noNotes">No notes saved</p>';
-            document.getElementById('notesModal').style.display = 'grid';
-            lucide.createIcons();
-        }
-        function closeNotesModal() { document.getElementById('notesModal').style.display='none'; }
-        function openAboutModal() { document.getElementById('aboutModal').style.display='grid'; }
-        function closeAboutModal() { document.getElementById('aboutModal').style.display='none'; }
 
         function setFilter(filter) {
             currentFilter = filter;
@@ -571,7 +636,26 @@
 
         document.getElementById('search-input').addEventListener('input', (e) => { searchTerm = e.target.value; render(); });
 
-        // Timer (unchanged)
+        // Modals setup
+        function openNotesModal() {
+            const container = document.getElementById('notesList');
+            const notes = [];
+            const extract = (items, parent='') => {
+                items.forEach(i => {
+                    if (i.notes) notes.push({ title: i.title, notes: i.notes, parent });
+                    if (i.children) extract(i.children, i.title);
+                });
+            };
+            extract(syllabusData);
+            container.innerHTML = notes.length ? notes.map(n => `<div class="bg-white/5 p-4 rounded-2xl border border-white/10"><h4 class="font-bold text-indigo-300">${n.title} ${n.parent?`<span class="text-[10px] text-indigo-500/70"> (in ${n.parent})</span>`:''}</h4><p class="text-sm text-indigo-200/70 mt-1 whitespace-pre-wrap">${n.notes}</p></div>`).join('') : '<p class="text-indigo-300/30 text-center" data-i18n="noNotes">No notes saved</p>';
+            document.getElementById('notesModal').style.display = 'grid';
+            lucide.createIcons();
+        }
+        function closeNotesModal() { document.getElementById('notesModal').style.display='none'; }
+        function openAboutModal() { document.getElementById('aboutModal').style.display='grid'; }
+        function closeAboutModal() { document.getElementById('aboutModal').style.display='none'; }
+
+        // Timer
         let timerSeconds = 1500, timerActive = false, timerInterval;
         function updateTimer() {
             const timerDisplay = document.getElementById('timer-display');
@@ -583,30 +667,49 @@
         }
         function toggleTimer() {
             timerActive = !timerActive; const btn = document.getElementById('timer-btn');
-            if(timerActive) { btn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>'; timerInterval = setInterval(() => { timerSeconds--; updateTimer(); if(timerSeconds<=0) { clearInterval(timerInterval); resetTimer(); } },1000); }
-            else { btn.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i>'; clearInterval(timerInterval); }
+            if(timerActive) { 
+                btn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>'; 
+                timerInterval = setInterval(() => { 
+                    timerSeconds--; updateTimer(); 
+                    if(timerSeconds<=0) { clearInterval(timerInterval); resetTimer(); } 
+                },1000); 
+            } else { 
+                btn.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i>'; 
+                clearInterval(timerInterval); 
+            }
             lucide.createIcons();
         }
         function resetTimer() { clearInterval(timerInterval); timerActive = false; timerSeconds = 1500; updateTimer(); document.getElementById('timer-btn').innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i>'; lucide.createIcons(); }
         window.toggleTimer = toggleTimer; window.resetTimer = resetTimer;
 
-        // Initialize
-        render(); renderActiveTargets(); updateTimer(); lucide.createIcons();
-
-        window.onclick = (e) => { if (e.target.classList.contains('modal-overlay')) e.target.style.display='none'; };
-
-        // Insert subtarget modal HTML (unchanged)
+        // Populate and insert Subtarget Modal HTML
         document.getElementById('subtargetModal').innerHTML = `<div class="glow-card max-w-lg w-[95%] rounded-[2.5rem] p-8 border-indigo-500/30 shadow-2xl">
             <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="layers-3" class="text-indigo-400"></i> New Sub-target</h3><button onclick="closeModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div>
             <form id="subtargetForm" onsubmit="event.preventDefault(); saveSubtarget();" class="space-y-5">
                 <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Sub-target Name</label><input type="text" id="modalTitle" required class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-indigo-500 transition" placeholder="e.g. Implement WebGL context..."></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Priority</label><select id="modalPriority" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none"><option value="1">🔥 High</option><option value="2" selected>⚡ Medium</option><option value="3">🌀 Low</option></select></div><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Deadline</label><input type="date" id="modalDue" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white [color-scheme:dark] outline-none"></div></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Priority</label><select id="modalPriority" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none"><option value="1">🔥 High</option><option value="2" selected>⚡ Medium</option><option value="3">🌀 Low</option></select></div>
+                    <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Deadline</label><input type="date" id="modalDue" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white [color-scheme:dark] outline-none"></div>
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 cursor-pointer bg-black/60 border border-white/10 rounded-2xl p-4 hover:border-yellow-500/50 transition">
+                        <input type="checkbox" id="modalIsDaily" class="w-4 h-4 accent-yellow-500 bg-transparent rounded">
+                        <span class="text-white text-sm font-semibold">Mark as ⭐ Daily Target</span>
+                    </label>
+                </div>
                 <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Context & Notes</label><textarea id="modalNotes" rows="3" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white resize-none outline-none focus:border-indigo-500" placeholder="Links, steps..."></textarea></div>
                 <button type="submit" class="w-full py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all transform active:scale-[0.98]">Add to Roadmap</button>
             </form>
         </div>`;
+
+        // Close Modals on overlay click
+        window.onclick = (e) => { if (e.target.classList.contains('modal-overlay')) { e.target.style.display='none'; currentParentId = null; } };
+
+        // Initial setup
+        render(); 
+        renderActiveTargets(); 
+        updateTimer(); 
         lucide.createIcons();
     </script>
-    <!-- (pomodoro div is only once, above) -->
 </body>
 </html>
