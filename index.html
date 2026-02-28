@@ -87,6 +87,17 @@
         }
         .mobile-nav { position: absolute; top: 80px; right: 20px; left:20px; background: #0f0f1a; border-radius: 2rem; padding: 1.5rem; border: 1px solid rgba(139,92,246,0.3); backdrop-filter: blur(20px); z-index: 100; display: none; }
         .mobile-nav.show { display: block; }
+        /* daily subtags chips inside active sprints */
+        .daily-badge {
+            background: rgba(139,92,246,0.2);
+            border-radius: 40px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            color: #a78bfa;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="pb-24">
@@ -176,12 +187,12 @@
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span></span>
-                            <h2 class="font-bold text-lg" data-i18n="activeSprints">Active Sprints</h2>
+                            <h2 class="font-bold text-lg" data-i18n="activeSprints">Daily sprints</h2>
                         </div>
-                        <span class="text-xs text-indigo-300/50 uppercase tracking-widest" data-i18n="priorityDeadline">Sub-targets only</span>
+                        <span class="text-xs text-indigo-300/50 uppercase tracking-widest" data-i18n="priorityDeadline">Today / tomorrow</span>
                     </div>
-                    <div id="active-targets-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-y-auto max-h-[200px] pr-2">
-                        <!-- dynamic content: only subtasks (leaf nodes) -->
+                    <div id="active-targets-container" class="flex-1 overflow-y-auto max-h-[220px] pr-2 space-y-3">
+                        <!-- dynamic content: grouped by today / tomorrow -->
                     </div>
                 </div>
             </div>
@@ -217,7 +228,7 @@
                 <span class="filter-chip" data-filter="priority2" onclick="setFilter('priority2')" data-i18n="standard">⚡ Standard</span>
                 <span class="filter-chip" data-filter="completed" onclick="setFilter('completed')" data-i18n="done">✓ Done</span>
                 <span class="filter-chip" data-filter="incomplete" onclick="setFilter('incomplete')" data-i18n="pending">⏳ Pending</span>
-                <!-- new advanced filters as chips (active toggle) -->
+                <!-- advanced filters -->
                 <span class="filter-chip" id="filterHasNotes" onclick="toggleAdvancedFilter('hasNotes')" data-i18n="withNotes">📝 Has notes</span>
                 <span class="filter-chip" id="filterHasDeadline" onclick="toggleAdvancedFilter('hasDeadline')" data-i18n="withDeadline">⏰ Has deadline</span>
                 <span class="filter-chip" id="filterLeafOnly" onclick="toggleAdvancedFilter('leafOnly')" data-i18n="subtasksOnly">🔹 Subtasks only</span>
@@ -228,12 +239,12 @@
             </div>
         </div>
 
-        <!-- Roadmap container -->
+        <!-- Roadmap container (children sorted by due date) -->
         <div id="roadmap-engine" class="space-y-6"></div>
     </div>
 
     <!-- Modals: Subtarget, Notes, About -->
-    <div id="subtargetModal" class="modal-overlay"><!-- existing modal --></div>
+    <div id="subtargetModal" class="modal-overlay"><!-- filled via JS --></div>
     <div id="notesModal" class="modal-overlay">
         <div class="glow-card max-w-2xl w-full rounded-[2.5rem] p-8 max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -250,39 +261,42 @@
                 <button onclick="closeAboutModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <p class="text-indigo-200/70 mb-4" data-i18n="aboutText">Advanced syllabus architect with sub-target sprints, focus timer, and multilingual UI. Built for deep work.</p>
-            <p class="text-xs text-indigo-400/50">v2.0 · responsive · smart filters</p>
+            <p class="text-xs text-indigo-400/50">v2.1 · daily subtargets · date-sorted</p>
         </div>
     </div>
 
-    <!-- Pomodoro timer unchanged -->
+    <!-- Pomodoro timer (original, unchanged) -->
     <div id="pomodoro" class="fixed bottom-8 right-8 glow-card p-4 rounded-[2rem] border-indigo-500/40 flex items-center gap-4 z-50 shadow-2xl group">
-        <!-- existing timer svg etc -->
+        <div class="relative"><svg class="w-14 h-14 transform -rotate-90"><circle cx="28" cy="28" r="24" stroke="currentColor" stroke-width="3" fill="transparent" class="text-white/5" /><circle id="timer-progress" cx="28" cy="28" r="24" stroke="currentColor" stroke-width="3" fill="transparent" stroke-dasharray="150.8" stroke-dashoffset="0" class="text-indigo-500 transition-all duration-1000" /></svg><div class="absolute inset-0 flex items-center justify-center font-bold text-xs" id="timer-display">25:00</div></div>
+        <div class="pr-2"><p class="text-[9px] uppercase font-black text-indigo-400 tracking-tighter" data-i18n="focusSession">Focus Session</p><div class="flex gap-3 mt-1"><button onclick="toggleTimer()" id="timer-btn" class="hover:text-white text-indigo-300 transition"><i data-lucide="play" class="w-4 h-4 fill-current"></i></button><button onclick="resetTimer()" class="hover:text-white text-indigo-300 transition"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div></div>
     </div>
 
     <script>
-        // ---------- LANGUAGE TRANSLATIONS ----------
+        // ---------- LANGUAGE TRANSLATIONS (extended) ----------
         const translations = {
             en: {
                 brand: 'TrackMe', home: 'Home', notes: 'Notes', about: 'About',
                 focus: 'Focus', center: 'Center', subtitle: 'Your roadmap intelligence dashboard. Track sub-targets and hit deadlines with precision.',
                 totalProgress: 'Total Progress', activeModules: 'Active Modules',
-                activeSprints: 'Active Sprints', priorityDeadline: 'Sub-targets only',
+                activeSprints: 'Daily sprints', priorityDeadline: 'Today / tomorrow',
                 high: 'High Priority', med: 'Med Priority', low: 'Low Priority',
                 initialize: 'Initialize', all: 'All', critical: '🔥 Critical', standard: '⚡ Standard',
                 done: '✓ Done', pending: '⏳ Pending', withNotes: '📝 Has notes', withDeadline: '⏰ Has deadline',
                 subtasksOnly: '🔹 Subtasks only', allNotes: 'All Notes & Resources', aboutTitle: 'TrackMe Pro',
-                aboutText: 'Advanced syllabus architect with sub-target sprints, focus timer, and multilingual UI. Built for deep work.'
+                aboutText: 'Advanced syllabus architect with sub-target sprints, focus timer, and multilingual UI. Built for deep work.',
+                today: 'Today', tomorrow: 'Tomorrow', noActive: 'No daily subtasks'
             },
             bn: {
                 brand: 'ট্র্যাকমি', home: 'হোম', notes: 'নোট', about: 'সম্পর্কে',
                 focus: 'ফোকাস', center: 'সেন্টার', subtitle: 'আপনার রোডম্যাপ ইন্টেলিজেন্স ড্যাশবোর্ড। সাব-টার্গেট ট্র্যাক করুন এবং সময়সীমা নির্ভুলভাবে পূরণ করুন।',
                 totalProgress: 'মোট অগ্রগতি', activeModules: 'সক্রিয় মডিউল',
-                activeSprints: 'সক্রিয় স্প্রিন্ট', priorityDeadline: 'শুধু সাব-টাস্ক',
+                activeSprints: 'দৈনিক স্প্রিন্ট', priorityDeadline: 'আজ / আগামীকাল',
                 high: 'উচ্চ অগ্রাধিকার', med: 'মাঝারি অগ্রাধিকার', low: 'নিম্ন অগ্রাধিকার',
                 initialize: 'শুরু করুন', all: 'সব', critical: '🔥 জরুরি', standard: '⚡ সাধারণ',
                 done: '✓ সম্পন্ন', pending: '⏳ অপেক্ষমান', withNotes: '📝 নোট আছে', withDeadline: '⏰ সময়সীমা আছে',
                 subtasksOnly: '🔹 সাবটাস্ক শুধু', allNotes: 'সব নোট ও রিসোর্স', aboutTitle: 'ট্র্যাকমি প্রো',
-                aboutText: 'উন্নত সিলেবাস আর্কিটেক্ট যা সাব-টার্গেট স্প্রিন্ট, ফোকাস টাইমার এবং বহুভাষিক ইন্টারফেস সহ। গভীর কাজের জন্য তৈরি।'
+                aboutText: 'উন্নত সিলেবাস আর্কিটেক্ট যা সাব-টার্গেট স্প্রিন্ট, ফোকাস টাইমার এবং বহুভাষিক ইন্টারফেস সহ। গভীর কাজের জন্য তৈরি।',
+                today: 'আজ', tomorrow: 'আগামীকাল', noActive: 'কোন দৈনিক সাবটাস্ক নেই'
             }
         };
         let currentLang = 'en';
@@ -299,13 +313,13 @@
                     }
                 }
             });
-            // also update select options text? we can do manually
             const prioritySelect = document.getElementById('priority-input');
             if(prioritySelect) {
                 prioritySelect.options[0].text = translations[currentLang].high;
                 prioritySelect.options[1].text = translations[currentLang].med;
                 prioritySelect.options[2].text = translations[currentLang].low;
             }
+            renderActiveTargets(); // refresh with new labels
         }
 
         // ---------- MOBILE MENU ----------
@@ -322,7 +336,6 @@
         let currentFilter = 'all';
         let searchTerm = '';
         let currentParentId = null;
-        // advanced filter states
         let advFilters = { hasNotes: false, hasDeadline: false, leafOnly: false };
 
         function save() {
@@ -330,14 +343,13 @@
             render(); renderActiveTargets();
         }
 
-        // Progress helper
         function getProgress(item) {
             if (!item.children || item.children.length === 0) return item.completed ? 100 : 0;
             const total = item.children.reduce((acc, child) => acc + getProgress(child), 0);
             return Math.round(total / item.children.length);
         }
 
-        // ----- ADVANCED FILTER toggles -----
+        // advanced filter toggles
         function toggleAdvancedFilter(type) {
             advFilters[type] = !advFilters[type];
             const chip = document.getElementById(`filter${type.charAt(0).toUpperCase()+type.slice(1)}`);
@@ -345,7 +357,6 @@
             render();
         }
 
-        // search match recursive
         function searchMatch(item, term) {
             const inTitle = item.title.toLowerCase().includes(term);
             const inNotes = item.notes && item.notes.toLowerCase().includes(term);
@@ -353,11 +364,8 @@
             return inTitle || inNotes || inChildren;
         }
 
-        // apply all filters (filter + advanced + search)
         function filterItems() {
             let filtered = syllabusData;
-
-            // basic filter (priority / completed)
             if (currentFilter !== 'all') {
                 filtered = filtered.filter(item => {
                     if (currentFilter === 'priority1') return item.priority === 1;
@@ -367,21 +375,15 @@
                     return true;
                 });
             }
-
-            // advanced: hasNotes
             if (advFilters.hasNotes) {
                 filtered = filtered.filter(item => item.notes || (item.children && item.children.some(c => c.notes)));
             }
-            // hasDeadline
             if (advFilters.hasDeadline) {
                 filtered = filtered.filter(item => item.dueDate || (item.children && item.children.some(c => c.dueDate)));
             }
-            // leafOnly: only show items with no children
             if (advFilters.leafOnly) {
                 filtered = filtered.filter(item => item.children.length === 0);
             }
-
-            // search
             if (searchTerm.trim()) {
                 const term = searchTerm.toLowerCase();
                 filtered = filtered.filter(item => searchMatch(item, term));
@@ -389,14 +391,15 @@
             return filtered;
         }
 
-        // ----- ACTIVE SPRINTS (only sub-targets = leaf nodes, incomplete, with due or priority 1) -----
+        // ----- ACTIVE SPRINTS: TODAY / TOMORROW GROUPS -----
         function renderActiveTargets() {
             const container = document.getElementById('active-targets-container');
             let activeItems = [];
 
             const collectLeafIncomplete = (items, parentTitle = '') => {
                 items.forEach(item => {
-                    if (!item.completed && item.children.length === 0 && (item.dueDate || item.priority === 1)) {
+                    // leaf, incomplete, and has dueDate (daily subtasks)
+                    if (!item.completed && item.children.length === 0 && item.dueDate) {
                         activeItems.push({ ...item, parentTitle });
                     }
                     if (item.children.length) collectLeafIncomplete(item.children, item.title);
@@ -404,26 +407,44 @@
             };
             collectLeafIncomplete(syllabusData);
 
-            activeItems.sort((a,b) => (a.priority - b.priority) || (new Date(a.dueDate||'9999') - new Date(b.dueDate||'9999')));
-            const slice = activeItems.slice(0,4);
+            // date strings
+            const today = new Date(); today.setHours(0,0,0,0);
+            const todayStr = today.toISOString().split('T')[0];
+            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-            if (!slice.length) {
-                container.innerHTML = `<div class="col-span-full flex flex-col items-center py-8 text-indigo-300/30"><i data-lucide="zap-off" class="w-6 h-6 mb-2"></i><p class="text-xs uppercase tracking-widest font-bold" data-i18n="noActive">No active sub-targets</p></div>`;
-            } else {
-                container.innerHTML = slice.map(item => {
-                    const overdue = item.dueDate && new Date(item.dueDate) < new Date().setHours(0,0,0,0);
-                    return `<div class="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition">
-                        <div class="overflow-hidden"><p class="text-[9px] text-indigo-400 font-black uppercase truncate">${item.parentTitle || '🔹'}</p>
-                        <h4 class="text-sm font-bold text-white truncate">${item.title}</h4>
-                        <div class="flex gap-2 mt-1">${item.dueDate?`<span class="text-[9px] ${overdue?'text-red-400':'text-indigo-300/50'} font-bold">BY ${item.dueDate}</span>`:''}<span class="text-[9px] text-indigo-500 font-bold">${item.priority===1?'URGENT':'STABLE'}</span></div></div>
-                        <button onclick="toggleComplete('${item.id}')" class="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500 transition"><i data-lucide="check" class="w-4 h-4 text-white"></i></button>
-                    </div>`;
-                }).join('');
+            const todayItems = activeItems.filter(i => i.dueDate === todayStr);
+            const tomorrowItems = activeItems.filter(i => i.dueDate === tomorrowStr);
+            const laterItems = activeItems.filter(i => i.dueDate && i.dueDate !== todayStr && i.dueDate !== tomorrowStr).slice(0,2); // limit
+
+            function renderItem(item) {
+                const overdue = item.dueDate && new Date(item.dueDate) < new Date().setHours(0,0,0,0);
+                return `<div class="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition">
+                    <div class="overflow-hidden"><p class="text-[9px] text-indigo-400 font-black uppercase truncate">${item.parentTitle || '🔹'}</p>
+                    <h4 class="text-sm font-bold text-white truncate">${item.title}</h4>
+                    <div class="flex gap-2 mt-1"><span class="text-[9px] ${overdue?'text-red-400':'text-indigo-300/50'} font-bold">BY ${item.dueDate}</span></div></div>
+                    <button onclick="toggleComplete('${item.id}')" class="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500 transition"><i data-lucide="check" class="w-4 h-4 text-white"></i></button>
+                </div>`;
             }
+
+            let html = '';
+            if (todayItems.length) {
+                html += `<div><span class="daily-badge"><i data-lucide="sun" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].today}</span><div class="space-y-2 mt-2">${todayItems.map(renderItem).join('')}</div></div>`;
+            }
+            if (tomorrowItems.length) {
+                html += `<div class="mt-3"><span class="daily-badge"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].tomorrow}</span><div class="space-y-2 mt-2">${tomorrowItems.map(renderItem).join('')}</div></div>`;
+            }
+            if (laterItems.length && todayItems.length + tomorrowItems.length < 3) {
+                html += `<div class="mt-3"><span class="daily-badge">📅 upcoming</span><div class="space-y-2 mt-2">${laterItems.map(renderItem).join('')}</div></div>`;
+            }
+            if (!html) {
+                html = `<div class="col-span-full flex flex-col items-center py-8 text-indigo-300/30"><i data-lucide="zap-off" class="w-6 h-6 mb-2"></i><p class="text-xs uppercase tracking-widest font-bold" data-i18n="noActive">No daily subtasks</p></div>`;
+            }
+            container.innerHTML = html;
             lucide.createIcons();
         }
 
-        // ----- toggle complete, delete, add root, child modal etc (reuse existing) -----
+        // ----- TOGGLE, DELETE, ADD ROOT (unchanged) -----
         function toggleComplete(id) {
             const proc = (items) => {
                 for (let item of items) {
@@ -464,9 +485,7 @@
             };
             find(syllabusData); closeModal(); save();
         }
-
-        // import / export
-        function exportData() { /* same */ const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(syllabusData)); const a=document.createElement('a'); a.href=dataStr; a.download="roadmap.json"; a.click(); }
+        function exportData() { const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(syllabusData)); const a=document.createElement('a'); a.href=dataStr; a.download="roadmap.json"; a.click(); }
         function importData() {
             const input = document.createElement('input'); input.type='file'; input.accept='.json';
             input.onchange = e => {
@@ -476,10 +495,19 @@
             }; input.click();
         }
 
-        // ----- render main roadmap -----
+        // ----- RENDER MAIN ROADMAP with children sorted by dueDate -----
         function generateHTML(item, isRoot=false) {
             const progress = getProgress(item);
             const prioClass = {1:'border-l-red-500',2:'border-l-indigo-500',3:'border-l-cyan-500'}[item.priority]||'border-l-indigo-500';
+
+            // sort children by dueDate (ascending, nulls at end)
+            const sortedChildren = item.children ? [...item.children].sort((a,b) => {
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return a.dueDate.localeCompare(b.dueDate);
+            }) : [];
+
             return `
                 <div class="${isRoot?'mb-6':'mt-4 relative ml-6'}">
                     ${!isRoot?'<div class="nested-line"></div>':''}
@@ -496,7 +524,7 @@
                             </div>
                         </div>
                         ${item.notes && !item.completed?`<div class="mt-3 text-xs text-indigo-200/50 bg-black/20 p-3 rounded-xl border border-white/5">${item.notes}</div>`:''}
-                        ${item.children.length?`<div class="children-container">${item.children.map(c=>generateHTML(c)).join('')}</div>`:''}
+                        ${sortedChildren.length?`<div class="children-container">${sortedChildren.map(c=>generateHTML(c)).join('')}</div>`:''}
                     </div>
                 </div>
             `;
@@ -515,7 +543,7 @@
             lucide.createIcons();
         }
 
-        // ----- Notes Modal -----
+        // Notes modal
         function openNotesModal() {
             const container = document.getElementById('notesList');
             const notes = [];
@@ -534,7 +562,6 @@
         function openAboutModal() { document.getElementById('aboutModal').style.display='grid'; }
         function closeAboutModal() { document.getElementById('aboutModal').style.display='none'; }
 
-        // set basic filter
         function setFilter(filter) {
             currentFilter = filter;
             document.querySelectorAll('.filter-chip[data-filter]').forEach(c => c.classList.remove('active'));
@@ -542,15 +569,14 @@
             render();
         }
 
-        // search
         document.getElementById('search-input').addEventListener('input', (e) => { searchTerm = e.target.value; render(); });
 
-        // Timer (fixed: added guard to prevent null error)
+        // Timer (unchanged)
         let timerSeconds = 1500, timerActive = false, timerInterval;
         function updateTimer() {
             const timerDisplay = document.getElementById('timer-display');
             const timerProgress = document.getElementById('timer-progress');
-            if (!timerDisplay || !timerProgress) return; // exit if elements not found (fixes the error)
+            if (!timerDisplay || !timerProgress) return;
             const m = Math.floor(timerSeconds/60); const s = timerSeconds%60;
             timerDisplay.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             timerProgress.style.strokeDashoffset = 150.8 - (150.8 * (timerSeconds/1500));
@@ -567,10 +593,9 @@
         // Initialize
         render(); renderActiveTargets(); updateTimer(); lucide.createIcons();
 
-        // modal outside click
         window.onclick = (e) => { if (e.target.classList.contains('modal-overlay')) e.target.style.display='none'; };
 
-        // ensure subtarget modal html (it was missing, add quickly)
+        // Insert subtarget modal HTML (unchanged)
         document.getElementById('subtargetModal').innerHTML = `<div class="glow-card max-w-lg w-[95%] rounded-[2.5rem] p-8 border-indigo-500/30 shadow-2xl">
             <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="layers-3" class="text-indigo-400"></i> New Sub-target</h3><button onclick="closeModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div>
             <form id="subtargetForm" onsubmit="event.preventDefault(); saveSubtarget();" class="space-y-5">
@@ -582,10 +607,6 @@
         </div>`;
         lucide.createIcons();
     </script>
-    <!-- ensure pomodoro html exists -->
-    <div id="pomodoro" class="fixed bottom-8 right-8 glow-card p-4 rounded-[2rem] border-indigo-500/40 flex items-center gap-4 z-50 shadow-2xl group">
-        <div class="relative"><svg class="w-14 h-14 transform -rotate-90"><circle cx="28" cy="28" r="24" stroke="currentColor" stroke-width="3" fill="transparent" class="text-white/5" /><circle id="timer-progress" cx="28" cy="28" r="24" stroke="currentColor" stroke-width="3" fill="transparent" stroke-dasharray="150.8" stroke-dashoffset="0" class="text-indigo-500 transition-all duration-1000" /></svg><div class="absolute inset-0 flex items-center justify-center font-bold text-xs" id="timer-display">25:00</div></div>
-        <div class="pr-2"><p class="text-[9px] uppercase font-black text-indigo-400 tracking-tighter" data-i18n="focusSession">Focus Session</p><div class="flex gap-3 mt-1"><button onclick="toggleTimer()" id="timer-btn" class="hover:text-white text-indigo-300 transition"><i data-lucide="play" class="w-4 h-4 fill-current"></i></button><button onclick="resetTimer()" class="hover:text-white text-indigo-300 transition"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div></div>
-    </div>
+    <!-- (pomodoro div is only once, above) -->
 </body>
 </html>
