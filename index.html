@@ -15,15 +15,15 @@
     <meta property="og:title" content="TrackMe Pro · Focus Architect">
     <meta property="og:description" content="Smart timeline & daily focus manager with advanced analytics.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="icon-512.png">
+    <meta property="og:image" content="icon.png">
     <meta property="og:url" content="https://yourdomain.com">
     <meta name="twitter:card" content="summary_large_image">
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
 
     <!-- Fonts & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -836,7 +836,7 @@
         }
         function showNotification(title, body) {
             if (Notification.permission === 'granted') {
-                new Notification(title, { body, icon: 'icon-192.png' });
+                new Notification(title, { body, icon: 'icon.png' });
             }
         }
         function startTimer() {
