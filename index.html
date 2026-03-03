@@ -3,14 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>TrackMe Pro · focus architect</title>
+    
+    <!-- SEO Meta -->
+    <title>TrackMe Pro · Focus Architect & Timeline</title>
+    <meta name="description" content="TrackMe Pro – intelligent timeline & daily focus manager. Set goals, track subtasks, use Pomodoro timer, and visualize progress.">
+    <meta name="keywords" content="productivity, timeline, goals, tasks, focus, pomodoro, PWA, tracker">
+    <meta name="author" content="Urfa Hasan Fattah">
+    <meta name="theme-color" content="#8b5cf6">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:title" content="TrackMe Pro · Focus Architect">
+    <meta property="og:description" content="Smart timeline & daily focus manager with advanced analytics.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="icon-512.png">
+    <meta property="og:url" content="https://yourdomain.com">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+    <!-- Fonts & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <!-- PWA manifest & icon -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#8b5cf6">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root {
@@ -28,7 +48,7 @@
             min-height: 100vh;
             overflow-x: hidden;
             margin: 0;
-            padding-bottom: 120px; /* space for footer */
+            padding-bottom: 120px;
         }
         .glow-card {
             background: var(--card-bg);
@@ -82,7 +102,6 @@
             color:#c4b5fd; cursor:pointer; transition:all 0.2s; white-space:nowrap;
         }
         .filter-chip.active { background:var(--primary); color:white; border-color:var(--primary); box-shadow:0 0 15px var(--primary); }
-        .filter-chip[data-active="true"] { background:var(--primary); color:white; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #2e2e4a; border-radius: 10px; }
@@ -104,12 +123,7 @@
             text-transform: uppercase;
         }
         .daily-focus-bg { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
-        
-        /* tooltip / info icon */
-        .info-tip {
-            position: relative;
-            cursor: help;
-        }
+        .info-tip { position: relative; cursor: help; }
         .info-tip:hover:after {
             content: attr(data-tip);
             position: absolute;
@@ -129,8 +143,6 @@
             pointer-events: none;
             backdrop-filter: blur(4px);
         }
-
-        /* footer */
         .footer {
             position: fixed;
             bottom: 0;
@@ -141,6 +153,20 @@
             border-top: 1px solid rgba(139,92,246,0.2);
             padding: 1rem 2rem;
             z-index: 50;
+        }
+        .tab-btn {
+            background: transparent; border: 1px solid rgba(139,92,246,0.3); border-radius: 40px; padding: 6px 16px; font-size: 0.75rem; font-weight: 700; color: #c4b5fd; transition: all 0.2s; cursor: pointer;
+        }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .timer-glass {
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 3rem; padding: 1.5rem;
+        }
+        .focus-mode-active .completed-item {
+            display: none !important;
+        }
+        .chart-container {
+            height: 100px;
+            width: 100%;
         }
     </style>
 </head>
@@ -173,12 +199,18 @@
             <button onclick="toggleLanguage()" class="p-2 bg-indigo-500/20 hover:bg-indigo-500/40 rounded-full transition" title="বাংলা / English">
                 <i data-lucide="languages" class="w-4 h-4"></i>
             </button>
+            <button onclick="openTimerModal()" class="p-2 bg-amber-500/20 hover:bg-amber-500/40 rounded-full transition" title="Focus timer">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+            </button>
         </div>
 
         <!-- mobile hamburger -->
         <div class="flex items-center gap-2 hamburger-menu">
             <button onclick="toggleLanguage()" class="p-2 bg-indigo-500/20 hover:bg-indigo-500/40 rounded-full transition">
                 <i data-lucide="languages" class="w-4 h-4"></i>
+            </button>
+            <button onclick="openTimerModal()" class="p-2 bg-amber-500/20 hover:bg-amber-500/40 rounded-full transition">
+                <i data-lucide="clock" class="w-4 h-4"></i>
             </button>
             <button id="hamburgerBtn" onclick="toggleMobileMenu()" class="p-2 bg-white/5 hover:bg-white/10 rounded-full transition">
                 <i data-lucide="menu" class="w-5 h-5"></i>
@@ -201,16 +233,16 @@
 
     <!-- main dashboard -->
     <div class="max-w-7xl mx-auto px-6 pt-10">
-        <!-- top stats + daily sprints -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-            <!-- left: focus header + stats -->
-            <div class="lg:col-span-4 space-y-6">
+        <!-- top row: stats + daily/upcoming -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+            <!-- left: original stats -->
+            <div class="lg:col-span-5 space-y-6">
                 <div>
                     <h1 class="text-5xl font-extrabold tracking-tighter text-white flex items-center gap-2">
                         <span data-i18n="focus">Focus</span> <span class="text-indigo-500" data-i18n="center">Center</span>
-                        <span class="info-tip ml-1" data-tip="Your high-level targets & overall progress"><i data-lucide="info" class="w-5 h-5 text-indigo-400/50"></i></span>
+                        <span class="info-tip ml-1" data-tip="High-level targets + start/end dates"><i data-lucide="info" class="w-5 h-5 text-indigo-400/50"></i></span>
                     </h1>
-                    <p class="text-indigo-300/60 mt-2 leading-relaxed" data-i18n="subtitle">Your roadmap intelligence dashboard. Track sub-targets and hit deadlines with precision.</p>
+                    <p class="text-indigo-300/60 mt-2 leading-relaxed" data-i18n="subtitle">Timeline intelligence. Track sub-targets with start & end dates.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="glow-card p-5 rounded-3xl relative">
@@ -219,7 +251,6 @@
                             <span id="stat-total" class="text-2xl font-bold text-white">0%</span>
                         </div>
                         <p class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold" data-i18n="totalProgress">Total Progress</p>
-                        <span class="info-tip absolute top-2 right-2" data-tip="Average completion of all root targets"><i data-lucide="info" class="w-3 h-3 text-indigo-400/30"></i></span>
                     </div>
                     <div class="glow-card p-5 rounded-3xl relative">
                         <div class="flex justify-between items-start mb-2">
@@ -227,25 +258,51 @@
                             <span id="stat-tasks" class="text-2xl font-bold text-white">0</span>
                         </div>
                         <p class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold" data-i18n="activeModules">Active Modules</p>
-                        <span class="info-tip absolute top-2 right-2" data-tip="Number of top-level targets"><i data-lucide="info" class="w-3 h-3 text-indigo-400/30"></i></span>
                     </div>
                 </div>
             </div>
 
-            <!-- right: DAILY SPRINTS advanced view -->
-            <div class="lg:col-span-8">
+            <!-- right: daily & upcoming tabs -->
+            <div class="lg:col-span-7">
                 <div class="glow-card active-sprint-card rounded-[2rem] p-6 h-full flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span></span>
-                            <h2 class="font-bold text-lg flex items-center gap-1" data-i18n="activeSprints">Daily sprints</h2>
-                            <span class="info-tip" data-tip="Shows pinned daily targets & today/tomorrow deadlines"><i data-lucide="info" class="w-4 h-4 text-indigo-300/60"></i></span>
+                            <h2 class="font-bold text-lg" data-i18n="activeSprints">Daily & Upcoming</h2>
                         </div>
-                        <span class="text-xs text-indigo-300/50 uppercase tracking-widest" data-i18n="priorityDeadline">Pinned & Deadlines</span>
+                        <div class="flex gap-2">
+                            <button class="tab-btn active" id="tab-current" onclick="switchDailyTab('current')">⭐ Current daily</button>
+                            <button class="tab-btn" id="tab-upcoming" onclick="switchDailyTab('upcoming')">📅 Upcoming</button>
+                        </div>
                     </div>
-                    <div id="active-targets-container" class="flex-1 overflow-y-auto max-h-[240px] pr-2 space-y-3">
-                        <!-- dynamically filled -->
-                    </div>
+                    <div id="daily-tab-container" class="flex-1 overflow-y-auto max-h-[260px] pr-2 space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADVANCED STATS CARD + NEW CHART CARD -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+            <div class="glow-card rounded-2xl p-4 flex items-center gap-3 col-span-1">
+                <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i></div>
+                <div><span class="text-xs text-indigo-300/60">Overdue</span><div class="text-2xl font-bold" id="stats-overdue">0</div></div>
+            </div>
+            <div class="glow-card rounded-2xl p-4 flex items-center gap-3 col-span-1">
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center"><i data-lucide="calendar-clock" class="w-5 h-5 text-amber-400"></i></div>
+                <div><span class="text-xs text-indigo-300/60">Upcoming (7d)</span><div class="text-2xl font-bold" id="stats-upcoming7">0</div></div>
+            </div>
+            <div class="glow-card rounded-2xl p-4 flex items-center gap-3 col-span-1">
+                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"><i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i></div>
+                <div><span class="text-xs text-indigo-300/60">Completed</span><div class="text-2xl font-bold" id="stats-completed">0</div></div>
+            </div>
+            <div class="glow-card rounded-2xl p-4 flex items-center gap-3 col-span-1">
+                <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center"><i data-lucide="stars" class="w-5 h-5 text-indigo-400"></i></div>
+                <div><span class="text-xs text-indigo-300/60">Daily active</span><div class="text-2xl font-bold" id="stats-daily">0</div></div>
+            </div>
+            <!-- New Chart Card -->
+            <div class="glow-card rounded-2xl p-4 col-span-1 flex flex-col justify-center">
+                <div class="text-xs text-indigo-300/60 mb-1">Weekly completed</div>
+                <div class="chart-container">
+                    <canvas id="weeklyChart" width="80" height="40"></canvas>
                 </div>
             </div>
         </div>
@@ -256,9 +313,11 @@
                 <div class="bg-[#0a0a0f] rounded-2xl p-3 flex flex-col md:flex-row gap-3 items-center">
                     <div class="relative flex-1">
                         <i data-lucide="flag" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500"></i>
-                        <input type="text" id="subject-input" class="w-full bg-transparent pl-12 pr-4 py-3 outline-none text-white placeholder-indigo-300/20 text-lg font-medium" placeholder="Add a high-level module (e.g., Advanced React Patterns)...">
+                        <input type="text" id="subject-input" class="w-full bg-transparent pl-12 pr-4 py-3 outline-none text-white placeholder-indigo-300/20 text-lg font-medium" placeholder="Add a high-level module...">
                     </div>
-                    <div class="flex gap-3 items-center">
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <input type="date" id="root-start" class="bg-white/5 text-indigo-200 px-3 py-2 rounded-xl border border-white/10 text-sm w-36" placeholder="Start">
+                        <input type="date" id="root-end" class="bg-white/5 text-indigo-200 px-3 py-2 rounded-xl border border-white/10 text-sm w-36" placeholder="End">
                         <select id="priority-input" class="bg-white/5 text-indigo-200 px-4 rounded-xl outline-none border border-white/10 text-sm font-semibold h-12">
                             <option value="1" data-i18n="high">High Priority</option>
                             <option value="2" selected data-i18n="med">Med Priority</option>
@@ -267,13 +326,12 @@
                         <button onclick="addRootTarget()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-indigo-600/30 active:scale-95 flex items-center gap-2">
                             <i data-lucide="plus-circle" class="w-5 h-5"></i> <span data-i18n="initialize">Initialize</span>
                         </button>
-                        <span class="info-tip" data-tip="Create a new top‑level target. You can later break it down."><i data-lucide="info" class="w-4 h-4 text-indigo-400/60"></i></span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- filter bar with info icon -->
+        <!-- filter bar (added focus mode toggle) -->
         <div class="bg-white/5 border border-white/10 rounded-3xl p-4 flex flex-col lg:flex-row gap-4 items-center justify-between mb-8 relative">
             <div class="flex flex-wrap gap-2 items-center">
                 <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="all">All</span>
@@ -286,146 +344,123 @@
                 <div class="w-px h-6 bg-white/10 mx-2 hidden lg:block"></div>
                 
                 <span class="filter-chip" id="filterHasNotes" onclick="toggleAdvancedFilter('hasNotes')" data-i18n="withNotes">📝 Notes</span>
-                <span class="filter-chip" id="filterHasDeadline" onclick="toggleAdvancedFilter('hasDeadline')" data-i18n="withDeadline">⏰ Deadlines</span>
+                <span class="filter-chip" id="filterHasDeadline" onclick="toggleAdvancedFilter('hasEndDate')" data-i18n="withDeadline">⏰ Has end date</span>
                 <span class="filter-chip" id="filterLeafOnly" onclick="toggleAdvancedFilter('leafOnly')" data-i18n="subtasksOnly">🔹 Subtasks</span>
+                
+                <!-- New focus mode toggle -->
+                <span class="filter-chip" id="focusModeToggle" onclick="toggleFocusMode()">🎯 Focus mode</span>
             </div>
             <div class="relative w-full lg:w-80 shrink-0">
                 <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400/50 w-4 h-4"></i>
                 <input type="text" id="search-input" placeholder="🔍 Search targets, notes..." class="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder-indigo-300/20 focus:outline-none focus:border-indigo-500/50">
             </div>
-            <span class="info-tip absolute -top-2 right-4 lg:static lg:ml-2" data-tip="Click chips to filter. Advanced: notes, deadlines, only subtasks."><i data-lucide="info" class="w-4 h-4 text-indigo-400/60"></i></span>
         </div>
 
         <!-- roadmap container -->
         <div id="roadmap-engine" class="space-y-6"></div>
     </div>
 
-    <!-- MODALS: subtarget (existing), edit (new) -->
-    <!-- Subtarget modal (unchanged) -->
+    <!-- MODALS: subtarget, edit, timer -->
     <div id="subtargetModal" class="modal-overlay"></div>
-
-    <!-- Edit modal -->
-    <div id="editModal" class="modal-overlay">
-        <div class="glow-card max-w-lg w-[95%] rounded-[2.5rem] p-8 border-indigo-500/30 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="pencil" class="text-indigo-400"></i> Edit target</h3>
-                <button onclick="closeEditModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <div id="editModal" class="modal-overlay"></div>
+    
+    <!-- Timer modal with sound and notification -->
+    <div id="timerModal" class="modal-overlay" style="display:none;">
+        <div class="timer-glass max-w-md w-[95%] rounded-[3rem] p-8 text-center">
+            <div class="flex justify-end"><button onclick="closeTimerModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div>
+            <h2 class="text-3xl font-black mb-2">🍅 Focus timer</h2>
+            <p class="text-indigo-300/60 text-sm mb-6">25 min work · 5 min break</p>
+            <div id="timer-display" class="text-7xl font-mono font-bold text-indigo-300 mb-8">25:00</div>
+            <div class="flex gap-4 justify-center">
+                <button onclick="startTimer()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-full font-bold flex items-center gap-2"><i data-lucide="play" class="w-5 h-5"></i> Start</button>
+                <button onclick="pauseTimer()" class="bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold flex items-center gap-2"><i data-lucide="pause" class="w-5 h-5"></i> Pause</button>
+                <button onclick="resetTimer()" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-full font-bold"><i data-lucide="rotate-ccw" class="w-5 h-5"></i></button>
             </div>
-            <form id="editForm" onsubmit="event.preventDefault(); saveEdit();" class="space-y-5">
-                <input type="hidden" id="editId">
-                <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Title</label><input type="text" id="editTitle" required class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-indigo-500 transition" placeholder="Target title"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Priority</label><select id="editPriority" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none"><option value="1">🔥 High</option><option value="2" selected>⚡ Medium</option><option value="3">🌀 Low</option></select></div>
-                    <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Deadline</label><input type="date" id="editDue" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white [color-scheme:dark] outline-none"></div>
-                </div>
-                <div>
-                    <label class="flex items-center gap-2 cursor-pointer bg-black/60 border border-white/10 rounded-2xl p-4 hover:border-yellow-500/50 transition">
-                        <input type="checkbox" id="editIsDaily" class="w-4 h-4 accent-yellow-500 bg-transparent rounded">
-                        <span class="text-white text-sm font-semibold">Mark as ⭐ Daily Target</span>
-                    </label>
-                </div>
-                <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Notes</label><textarea id="editNotes" rows="3" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white resize-none outline-none focus:border-indigo-500" placeholder="Context / notes"></textarea></div>
-                <button type="submit" class="w-full py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all transform active:scale-[0.98]">Update target</button>
-            </form>
+            <p class="mt-6 text-xs text-indigo-300/40" id="timer-status">Ready for deep work</p>
         </div>
     </div>
 
-    <!-- FOOTER with social links, author credit -->
+    <!-- FOOTER unchanged -->
     <footer class="footer flex flex-wrap items-center justify-between text-xs text-indigo-300/70">
         <div class="flex gap-4 items-center">
             <span class="text-white/80">© <span data-i18n="author">Urfa Hasan Fattah</span></span>
             <span class="hidden sm:inline-block w-px h-4 bg-indigo-500/30"></span>
-            <span class="text-indigo-400">TrackMe Pro · v3.0</span>
+            <span class="text-indigo-400">TrackMe Pro · v5.0 (premium)</span>
         </div>
         <div class="flex gap-3 items-center">
-            <a href="https://github.com/urfa" target="_blank" class="hover:text-white transition-colors" title="GitHub"><i data-lucide="github" class="w-4 h-4"></i></a>
-            <a href="https://facebook.com/urfa" target="_blank" class="hover:text-white transition-colors" title="Facebook"><i data-lucide="facebook" class="w-4 h-4"></i></a>
-            <a href="https://instagram.com/urfa" target="_blank" class="hover:text-white transition-colors" title="Instagram"><i data-lucide="instagram" class="w-4 h-4"></i></a>
-            <a href="https://wa.me/1234567890" target="_blank" class="hover:text-white transition-colors" title="WhatsApp"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
-            <a href="https://urfa.dev" target="_blank" class="hover:text-white transition-colors" title="Portfolio"><i data-lucide="globe" class="w-4 h-4"></i></a>
-            <a href="mailto:urfa@example.com" class="hover:text-white transition-colors" title="Email"><i data-lucide="mail" class="w-4 h-4"></i></a>
+            <a href="#" class="hover:text-white transition-colors" title="GitHub"><i data-lucide="github" class="w-4 h-4"></i></a>
+            <a href="#" class="hover:text-white transition-colors" title="Facebook"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+            <a href="#" class="hover:text-white transition-colors" title="Instagram"><i data-lucide="instagram" class="w-4 h-4"></i></a>
+            <a href="#" class="hover:text-white transition-colors" title="WhatsApp"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
+            <a href="#" class="hover:text-white transition-colors" title="Portfolio"><i data-lucide="globe" class="w-4 h-4"></i></a>
         </div>
     </footer>
 
     <script>
-        // ---------- PWA registration ----------
+        // ---------- PWA & translations (enhanced) ----------
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').catch(err => console.warn('SW registration failed', err));
             });
         }
 
-        // ---------- LANGUAGE TRANSLATIONS ----------
-        const translations = {
-            en: {
-                brand: 'TrackMe', home: 'Home', notes: 'Notes', about: 'About',
-                focus: 'Focus', center: 'Center', subtitle: 'Your roadmap intelligence dashboard. Track sub-targets and hit deadlines with precision.',
-                totalProgress: 'Total Progress', activeModules: 'Active Modules',
-                activeSprints: 'Daily sprints', priorityDeadline: 'Pinned & Deadlines',
-                high: 'High Priority', med: 'Med Priority', low: 'Low Priority',
-                initialize: 'Initialize', all: 'All', dailyFilter: '⭐ Daily Target', critical: '🔥 Critical', standard: '⚡ Standard',
-                done: '✓ Done', pending: '⏳ Pending', withNotes: '📝 Notes', withDeadline: '⏰ Deadlines',
-                subtasksOnly: '🔹 Subtasks', allNotes: 'All Notes & Resources', aboutTitle: 'TrackMe Pro',
-                aboutText: 'Advanced syllabus architect with sub-target sprints, focus timer, and multilingual UI. Built for deep work.',
-                daily: 'Daily Focus', today: 'Today', tomorrow: 'Tomorrow', noActive: 'No active daily targets',
-                author: 'Urfa Hasan Fattah'
-            },
-            bn: {
-                brand: 'ট্র্যাকমি', home: 'হোম', notes: 'নোট', about: 'সম্পর্কে',
-                focus: 'ফোকাস', center: 'সেন্টার', subtitle: 'আপনার রোডম্যাপ ইন্টেলিজেন্স ড্যাশবোর্ড। সাব-টার্গেট ট্র্যাক করুন এবং সময়সীমা নির্ভুলভাবে পূরণ করুন।',
-                totalProgress: 'মোট অগ্রগতি', activeModules: 'সক্রিয় মডিউল',
-                activeSprints: 'দৈনিক স্প্রিন্ট', priorityDeadline: 'পিন করা ও সময়সীমা',
-                high: 'উচ্চ অগ্রাধিকার', med: 'মাঝারি অগ্রাধিকার', low: 'নিম্ন অগ্রাধিকার',
-                initialize: 'শুরু করুন', all: 'সব', dailyFilter: '⭐ দৈনিক লক্ষ্য', critical: '🔥 জরুরি', standard: '⚡ সাধারণ',
-                done: '✓ সম্পন্ন', pending: '⏳ অপেক্ষমান', withNotes: '📝 নোট', withDeadline: '⏰ সময়সীমা',
-                subtasksOnly: '🔹 সাবটাস্ক', allNotes: 'সব নোট ও রিসোর্স', aboutTitle: 'ট্র্যাকমি প্রো',
-                aboutText: 'উন্নত সিলেবাস আর্কিটেক্ট যা সাব-টার্গেট স্প্রিন্ট, ফোকাস টাইমার এবং বহুভাষিক ইন্টারফেস সহ। গভীর কাজের জন্য তৈরি।',
-                daily: 'দৈনিক ফোকাস', today: 'আজ', tomorrow: 'আগামীকাল', noActive: 'কোন দৈনিক লক্ষ্য নেই',
-                author: 'উরফা হাসান ফাত্তাহ'
+        // Request notification permission on timer usage
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission();
             }
+        }
+
+        const translations = {
+            en: { brand:'TrackMe', home:'Home', notes:'Notes', about:'About', focus:'Focus', center:'Center', subtitle:'Timeline intelligence. Track with start & end dates.', totalProgress:'Total Progress', activeModules:'Active Modules', activeSprints:'Daily & Upcoming', high:'High Priority', med:'Med Priority', low:'Low Priority', initialize:'Initialize', all:'All', dailyFilter:'⭐ Daily Target', critical:'🔥 Critical', standard:'⚡ Standard', done:'✓ Done', pending:'⏳ Pending', withNotes:'📝 Notes', withDeadline:'⏰ Has end date', subtasksOnly:'🔹 Subtasks', daily:'Daily Focus', today:'Today', tomorrow:'Tomorrow', noActive:'No active targets', author:'Urfa Hasan Fattah' },
+            bn: { brand:'ট্র্যাকমি', home:'হোম', notes:'নোট', about:'সম্পর্কে', focus:'ফোকাস', center:'সেন্টার', subtitle:'টাইমলাইন ইন্টেলিজেন্স। শুরু ও শেষ তারিখ সহ ট্র্যাক করুন।', totalProgress:'মোট অগ্রগতি', activeModules:'সক্রিয় মডিউল', activeSprints:'দৈনিক ও আসন্ন', high:'উচ্চ', med:'মাঝারি', low:'নিম্ন', initialize:'শুরু করুন', all:'সব', dailyFilter:'⭐ দৈনিক লক্ষ্য', critical:'🔥 জরুরি', standard:'⚡ সাধারণ', done:'✓ সম্পন্ন', pending:'⏳ অপেক্ষমান', withNotes:'📝 নোট', withDeadline:'⏰ শেষ তারিখ আছে', subtasksOnly:'🔹 সাবটাস্ক', daily:'দৈনিক ফোকাস', today:'আজ', tomorrow:'আগামীকাল', noActive:'কোন সক্রিয় লক্ষ্য নেই', author:'উরফা হাসান ফাত্তাহ' }
         };
         let currentLang = 'en';
-
         function toggleLanguage() {
             currentLang = currentLang === 'en' ? 'bn' : 'en';
             document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
+                let key = el.getAttribute('data-i18n');
                 if (translations[currentLang][key]) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                        el.placeholder = translations[currentLang][key];
-                    } else {
-                        el.innerText = translations[currentLang][key];
-                    }
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = translations[currentLang][key];
+                    else el.innerText = translations[currentLang][key];
                 }
             });
-            const prioritySelect = document.getElementById('priority-input');
-            if(prioritySelect) {
-                prioritySelect.options[0].text = translations[currentLang].high;
-                prioritySelect.options[1].text = translations[currentLang].med;
-                prioritySelect.options[2].text = translations[currentLang].low;
-            }
-            renderActiveTargets(); 
+            const prio = document.getElementById('priority-input');
+            if(prio){ prio.options[0].text = translations[currentLang].high; prio.options[1].text = translations[currentLang].med; prio.options[2].text = translations[currentLang].low; }
+            renderDailyTab(); render();
+        }
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('show'); lucide.createIcons(); }
+        function closeMobileMenu() { document.getElementById('mobileMenu').classList.remove('show'); }
+
+        // ---------- DATA MODEL ----------
+        let syllabusData = JSON.parse(localStorage.getItem('trackme_pro_v9')) || [];
+        // migration from v8 (dueDate -> endDate)
+        if (syllabusData.length && typeof syllabusData[0].dueDate !== 'undefined') {
+            syllabusData = (function migrate(items) {
+                return items.map(item => {
+                    if (item.dueDate && !item.endDate) item.endDate = item.dueDate;
+                    if (!item.startDate) item.startDate = null;
+                    if (!item.repeat) item.repeat = 'none'; // new repeat field
+                    if (item.children) item.children = migrate(item.children);
+                    delete item.dueDate;
+                    return item;
+                });
+            })(syllabusData);
+            save();
         }
 
-        // ---------- MOBILE MENU ----------
-        function toggleMobileMenu() {
-            document.getElementById('mobileMenu').classList.toggle('show');
-            lucide.createIcons();
-        }
-        function closeMobileMenu() {
-            document.getElementById('mobileMenu').classList.remove('show');
-        }
-
-        // ---------- DATA & STATE ----------
-        let syllabusData = JSON.parse(localStorage.getItem('trackme_pro_v7')) || []; // version bump
         let currentFilter = 'all';
         let searchTerm = '';
         let currentParentId = null;
-        let advFilters = { hasNotes: false, hasDeadline: false, leafOnly: false };
+        let advFilters = { hasNotes: false, hasEndDate: false, leafOnly: false };
+        let focusMode = false; // new focus mode
 
         function save() {
-            localStorage.setItem('trackme_pro_v7', JSON.stringify(syllabusData));
-            render(); renderActiveTargets();
+            localStorage.setItem('trackme_pro_v9', JSON.stringify(syllabusData));
+            render();
+            renderDailyTab();
+            updateStatsCards();
+            updateWeeklyChart();
         }
 
         function getProgress(item) {
@@ -436,16 +471,20 @@
 
         function toggleAdvancedFilter(type) {
             advFilters[type] = !advFilters[type];
-            const chip = document.getElementById(`filter${type.charAt(0).toUpperCase()+type.slice(1)}`);
-            if (chip) chip.classList.toggle('active', advFilters[type]);
+            document.getElementById(`filter${type.charAt(0).toUpperCase()+type.slice(1)}`)?.classList.toggle('active', advFilters[type]);
             render();
         }
 
+        function toggleFocusMode() {
+            focusMode = !focusMode;
+            document.getElementById('focusModeToggle').classList.toggle('active', focusMode);
+            document.body.classList.toggle('focus-mode-active', focusMode);
+            render(); // re-render to apply hiding (but we handle via CSS, so maybe just re-render to refresh)
+        }
+
         function searchMatch(item, term) {
-            const inTitle = item.title.toLowerCase().includes(term);
-            const inNotes = item.notes && item.notes.toLowerCase().includes(term);
-            const inChildren = item.children && item.children.some(child => searchMatch(child, term));
-            return inTitle || inNotes || inChildren;
+            const t = term.toLowerCase();
+            return item.title.toLowerCase().includes(t) || (item.notes && item.notes.toLowerCase().includes(t)) || (item.children && item.children.some(c => searchMatch(c, t)));
         }
 
         function filterItems() {
@@ -460,357 +499,394 @@
                     return true;
                 });
             }
-            if (advFilters.hasNotes) {
-                filtered = filtered.filter(item => item.notes || (item.children && item.children.some(c => c.notes)));
-            }
-            if (advFilters.hasDeadline) {
-                filtered = filtered.filter(item => item.dueDate || (item.children && item.children.some(c => c.dueDate)));
-            }
-            if (advFilters.leafOnly) {
-                filtered = filtered.filter(item => item.children.length === 0);
-            }
-            if (searchTerm.trim()) {
-                const term = searchTerm.toLowerCase();
-                filtered = filtered.filter(item => searchMatch(item, term));
-            }
+            if (advFilters.hasNotes) filtered = filtered.filter(item => item.notes || (item.children && item.children.some(c => c.notes)));
+            if (advFilters.hasEndDate) filtered = filtered.filter(item => item.endDate || (item.children && item.children.some(c => c.endDate)));
+            if (advFilters.leafOnly) filtered = filtered.filter(item => item.children.length === 0);
+            if (searchTerm.trim()) { const term = searchTerm.toLowerCase(); filtered = filtered.filter(item => searchMatch(item, term)); }
             return filtered;
         }
 
-        // ----- ACTIVE SPRINTS (advanced daily view) -----
-        function renderActiveTargets() {
-            const container = document.getElementById('active-targets-container');
-            let dailyPinnedItems = [];
-            let deadlineItems = [];
+        // ----- daily & upcoming tabs (unchanged) -----
+        let currentDailyTab = 'current';
+        function switchDailyTab(tab) {
+            currentDailyTab = tab;
+            document.getElementById('tab-current').classList.toggle('active', tab==='current');
+            document.getElementById('tab-upcoming').classList.toggle('active', tab==='upcoming');
+            renderDailyTab();
+        }
 
-            const collectFocusItems = (items, parentTitle = '') => {
-                items.forEach(item => {
-                    if (!item.completed) {
-                        if (item.isDaily) {
-                            dailyPinnedItems.push({ ...item, parentTitle });
-                        } 
-                        else if (item.children.length === 0 && item.dueDate) {
-                            deadlineItems.push({ ...item, parentTitle });
-                        }
-                    }
-                    if (item.children.length) collectFocusItems(item.children, item.title);
-                });
-            };
-            collectFocusItems(syllabusData);
-
+        function renderDailyTab() {
+            const container = document.getElementById('daily-tab-container');
             const today = new Date(); today.setHours(0,0,0,0);
             const todayStr = today.toISOString().split('T')[0];
-            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-            const todayItems = deadlineItems.filter(i => i.dueDate === todayStr);
-            const tomorrowItems = deadlineItems.filter(i => i.dueDate === tomorrowStr);
-
-            function renderSprintItem(item, isPinned = false) {
-                const overdue = item.dueDate && new Date(item.dueDate) < new Date().setHours(0,0,0,0);
-                const bgClass = isPinned ? 'daily-focus-bg border-yellow-500/30' : 'bg-black/40 border-white/5';
-                
-                return `<div class="${bgClass} border p-3 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition">
-                    <div class="overflow-hidden">
-                        <p class="text-[9px] text-indigo-400 font-black uppercase truncate">${item.parentTitle || '🔹 ROOT TARGET'}</p>
-                        <h4 class="text-sm font-bold text-white truncate flex items-center gap-2">
-                            ${isPinned ? '⭐' : ''} ${item.title}
-                        </h4>
-                        <div class="flex gap-2 mt-1">
-                            ${item.dueDate ? `<span class="text-[9px] ${overdue?'text-red-400':'text-indigo-300/50'} font-bold">BY ${item.dueDate}</span>` : `<span class="text-[9px] text-indigo-300/30 font-bold">NO DEADLINE</span>`}
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        ${isPinned ? `<button onclick="toggleDailyTarget('${item.id}')" class="w-8 h-8 rounded-full border border-yellow-500/30 flex items-center justify-center hover:bg-yellow-500/20 transition"><i data-lucide="star-off" class="w-4 h-4 text-yellow-500"></i></button>` : ''}
-                        <button onclick="toggleComplete('${item.id}')" class="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500 transition"><i data-lucide="check" class="w-4 h-4 text-white"></i></button>
-                    </div>
-                </div>`;
+            let allTargets = [];
+            function flatten(items, parentTitle='') {
+                items.forEach(item => {
+                    if (!item.completed) {
+                        allTargets.push({ ...item, parentTitle });
+                        if (item.children) flatten(item.children, item.title);
+                    } else {
+                        if (item.children) flatten(item.children, parentTitle);
+                    }
+                });
             }
+            flatten(syllabusData);
+
+            const currentDaily = allTargets.filter(t => t.isDaily && (
+                (!t.startDate && !t.endDate) || 
+                (t.startDate && t.endDate && t.startDate <= todayStr && t.endDate >= todayStr) ||
+                (t.startDate && !t.endDate && t.startDate <= todayStr) ||
+                (!t.startDate && t.endDate && t.endDate >= todayStr)
+            ));
+
+            const upcoming = allTargets.filter(t => t.startDate && t.startDate > todayStr).sort((a,b) => a.startDate.localeCompare(b.startDate));
 
             let html = '';
-            
-            if (dailyPinnedItems.length) {
-                html += `<div><span class="daily-badge bg-yellow-500/20 text-yellow-400"><i data-lucide="star" class="w-3 h-3 inline mr-1 fill-current"></i> ${translations[currentLang].daily}</span><div class="space-y-2 mt-2">${dailyPinnedItems.map(i => renderSprintItem(i, true)).join('')}</div></div>`;
-            }
-            if (todayItems.length) {
-                html += `<div class="mt-4"><span class="daily-badge"><i data-lucide="sun" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].today}</span><div class="space-y-2 mt-2">${todayItems.map(i => renderSprintItem(i, false)).join('')}</div></div>`;
-            }
-            if (tomorrowItems.length) {
-                html += `<div class="mt-4"><span class="daily-badge"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i> ${translations[currentLang].tomorrow}</span><div class="space-y-2 mt-2">${tomorrowItems.map(i => renderSprintItem(i, false)).join('')}</div></div>`;
-            }
-            
-            if (!html) {
-                html = `<div class="col-span-full flex flex-col items-center py-8 text-indigo-300/30"><i data-lucide="zap-off" class="w-6 h-6 mb-2"></i><p class="text-xs uppercase tracking-widest font-bold" data-i18n="noActive">No active daily targets</p></div>`;
+            if (currentDailyTab === 'current') {
+                if (currentDaily.length) {
+                    html = currentDaily.map(item => renderDailyItem(item, true)).join('');
+                } else html = `<div class="text-indigo-300/30 text-center py-6">⭐ No current daily targets</div>`;
+            } else {
+                if (upcoming.length) {
+                    html = upcoming.map(item => renderDailyItem(item, false, true)).join('');
+                } else html = `<div class="text-indigo-300/30 text-center py-6">📅 No upcoming sub‑targets</div>`;
             }
             container.innerHTML = html;
             lucide.createIcons();
         }
 
-        // ----- CORE ACTIONS -----
-        function toggleComplete(id) {
+        function renderDailyItem(item, isPinned = false, isUpcoming = false) {
+            const overdue = item.endDate && new Date(item.endDate) < new Date().setHours(0,0,0,0);
+            return `<div class="border ${isPinned ? 'daily-focus-bg border-yellow-500/30' : 'border-white/5'} p-3 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition">
+                <div class="overflow-hidden">
+                    <p class="text-[9px] text-indigo-400 font-black uppercase truncate">${item.parentTitle || '🔹 ROOT'}</p>
+                    <h4 class="text-sm font-bold text-white truncate flex items-center gap-2">${item.isDaily ? '⭐' : ''} ${item.title}</h4>
+                    <div class="flex gap-3 mt-1 text-[9px] font-bold">
+                        ${item.startDate ? `<span class="text-cyan-400">▶ ${item.startDate}</span>` : ''}
+                        ${item.endDate ? `<span class="${overdue ? 'text-red-400' : 'text-indigo-300/70'}">⏹ ${item.endDate}</span>` : ''}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="toggleComplete('${item.id}')" class="w-8 h-8 rounded-full border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500 transition"><i data-lucide="check" class="w-4 h-4"></i></button>
+                    <button onclick="openEditModal('${item.id}')" class="w-8 h-8 rounded-full border border-blue-500/30 flex items-center justify-center hover:bg-blue-500/20"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                </div>
+            </div>`;
+        }
+
+        // ----- stats cards update -----
+        function updateStatsCards() {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const todayStr = today.toISOString().split('T')[0];
+            const nextWeek = new Date(today); nextWeek.setDate(today.getDate()+7); const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+            let all = [];
+            function collect(i) { i.forEach(t => { all.push(t); if (t.children) collect(t.children); }); }
+            collect(syllabusData);
+
+            const overdue = all.filter(t => !t.completed && t.endDate && t.endDate < todayStr).length;
+            const upcoming7 = all.filter(t => !t.completed && t.startDate && t.startDate >= todayStr && t.startDate <= nextWeekStr).length;
+            const completed = all.filter(t => t.completed).length;
+            const dailyActive = all.filter(t => t.isDaily && !t.completed && (!t.endDate || t.endDate >= todayStr)).length;
+
+            document.getElementById('stats-overdue').innerText = overdue;
+            document.getElementById('stats-upcoming7').innerText = upcoming7;
+            document.getElementById('stats-completed').innerText = completed;
+            document.getElementById('stats-daily').innerText = dailyActive;
+        }
+
+        // ----- Weekly chart (new) -----
+        let weeklyChart = null;
+        function updateWeeklyChart() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            const last7Days = [...Array(7)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toISOString().split('T')[0];
+            }).reverse();
+
+            // Count completions per day from history (we store completion timestamps? For now just count items completed today)
+            // We'll simulate: count items completed where endDate is in last7Days? Better to store completion log.
+            // For simplicity, we'll count items that were completed (boolean) but we don't have completion date.
+            // We'll create a simple completion log array in localStorage. For now, use placeholder data.
+            // To make it realistic, we'll maintain a completionLog array.
+            if (!localStorage.getItem('completionLog')) {
+                localStorage.setItem('completionLog', JSON.stringify([]));
+            }
+            const log = JSON.parse(localStorage.getItem('completionLog')) || [];
+            const counts = last7Days.map(date => log.filter(entry => entry.date === date).length);
+
+            if (weeklyChart) weeklyChart.destroy();
+            weeklyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(d => d.slice(5)), // MM-DD
+                    datasets: [{
+                        label: 'Completed',
+                        data: counts,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.2,
+                        pointBackgroundColor: '#c4b5fd',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { color: '#a78bfa80', maxRotation: 0, autoSkip: true }, grid: { display: false } }, y: { ticks: { color: '#a78bfa80', stepSize: 1 }, grid: { color: '#ffffff10' } } }
+                }
+            });
+        }
+
+        // ----- CORE ACTIONS (updated with repeat) -----
+        function toggleComplete(id) { 
             const proc = (items) => {
                 for (let item of items) {
-                    if (item.id === id) { 
-                        item.completed = !item.completed; 
-                        if(item.completed) confetti({particleCount:80,spread:60,colors:['#8b5cf6', '#06b6d4', '#f59e0b']}); 
-                        return true; 
+                    if (item.id === id) {
+                        item.completed = !item.completed;
+                        if (item.completed) {
+                            confetti({particleCount:60,spread:50});
+                            // Log completion for chart
+                            const log = JSON.parse(localStorage.getItem('completionLog')) || [];
+                            log.push({ id: item.id, date: new Date().toISOString().split('T')[0], title: item.title });
+                            localStorage.setItem('completionLog', JSON.stringify(log.slice(-100))); // keep last 100
+                            
+                            // Handle repeat
+                            if (item.repeat && item.repeat !== 'none') {
+                                createNextOccurrence(item);
+                            }
+                        }
+                        return true;
                     }
                     if (item.children && proc(item.children)) return true;
                 }
             };
             proc(syllabusData); save();
         }
-        
-        function toggleDailyTarget(id) {
-            const proc = (items) => {
-                for (let item of items) {
-                    if (item.id === id) { item.isDaily = !item.isDaily; return true; }
-                    if (item.children && proc(item.children)) return true;
-                }
-            };
-            proc(syllabusData); save();
+
+        function createNextOccurrence(item) {
+            if (!item.endDate) return; // need an end date to calculate next
+            const nextItem = JSON.parse(JSON.stringify(item));
+            nextItem.id = crypto.randomUUID();
+            nextItem.completed = false;
+            nextItem.createdAt = new Date().toISOString();
+            // Adjust dates based on repeat
+            const end = new Date(item.endDate);
+            if (item.repeat === 'daily') {
+                end.setDate(end.getDate() + 1);
+            } else if (item.repeat === 'weekdays') {
+                // find next weekday
+                do { end.setDate(end.getDate() + 1); } while (end.getDay() === 0 || end.getDay() === 6);
+            } else if (item.repeat === 'weekly') {
+                end.setDate(end.getDate() + 7);
+            }
+            nextItem.endDate = end.toISOString().split('T')[0];
+            if (nextItem.startDate) {
+                const start = new Date(nextItem.startDate);
+                if (item.repeat === 'daily') start.setDate(start.getDate() + 1);
+                else if (item.repeat === 'weekdays') { do { start.setDate(start.getDate() + 1); } while (start.getDay() === 0 || start.getDay() === 6); }
+                else if (item.repeat === 'weekly') start.setDate(start.getDate() + 7);
+                nextItem.startDate = start.toISOString().split('T')[0];
+            }
+            // Find parent and push
+            const parent = findParentOf(item.id, syllabusData);
+            if (parent) parent.children.push(nextItem);
+            else syllabusData.push(nextItem); // root level
         }
 
-        function deleteItem(id) {
-            if (!confirm('Remove this target?')) return;
-            const proc = (items) => {
-                for (let i=0; i<items.length; i++) {
-                    if (items[i].id === id) { items.splice(i,1); return true; }
-                    if (items[i].children && proc(items[i].children)) return true;
-                }
-            };
-            proc(syllabusData); save();
-        }
-
-        function addRootTarget() {
-            const inp = document.getElementById('subject-input');
-            const prio = document.getElementById('priority-input').value;
-            if (!inp.value.trim()) return;
-            syllabusData.push({ 
-                id: crypto.randomUUID(), title: inp.value, completed: false, 
-                priority: parseInt(prio), children: [], notes: "", dueDate: null, 
-                isDaily: false, createdAt: new Date().toISOString() 
-            });
-            inp.value = ''; save();
-        }
-
-        // edit functions
-        function openEditModal(id) {
-            const item = findItemById(id, syllabusData);
-            if (!item) return;
-            document.getElementById('editId').value = item.id;
-            document.getElementById('editTitle').value = item.title || '';
-            document.getElementById('editPriority').value = item.priority || 2;
-            document.getElementById('editDue').value = item.dueDate || '';
-            document.getElementById('editIsDaily').checked = item.isDaily || false;
-            document.getElementById('editNotes').value = item.notes || '';
-            document.getElementById('editModal').style.display = 'grid';
-            lucide.createIcons();
-        }
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-        function saveEdit() {
-            const id = document.getElementById('editId').value;
-            const item = findItemById(id, syllabusData);
-            if (!item) return;
-            item.title = document.getElementById('editTitle').value.trim();
-            item.priority = parseInt(document.getElementById('editPriority').value);
-            item.dueDate = document.getElementById('editDue').value || null;
-            item.isDaily = document.getElementById('editIsDaily').checked;
-            item.notes = document.getElementById('editNotes').value.trim();
-            closeEditModal();
-            save();
-        }
-
-        function findItemById(id, items) {
-            for (let i of items) {
-                if (i.id === id) return i;
-                if (i.children) {
-                    const found = findItemById(id, i.children);
+        function findParentOf(id, items, parent = null) {
+            for (let item of items) {
+                if (item.id === id) return parent;
+                if (item.children) {
+                    let found = findParentOf(id, item.children, item);
                     if (found) return found;
                 }
             }
             return null;
         }
 
-        // child modal
-        function openChildModal(parentId) { 
-            currentParentId = parentId; 
-            document.getElementById('subtargetModal').style.display = 'grid'; 
+        function toggleDailyTarget(id) {
+            const proc = (items) => { for (let item of items) { if (item.id === id) { item.isDaily = !item.isDaily; return true; } if (item.children && proc(item.children)) return true; } };
+            proc(syllabusData); save();
         }
-        function closeModal() { 
-            document.getElementById('subtargetModal').style.display = 'none'; 
-            document.getElementById('subtargetForm').reset(); 
-            currentParentId = null; 
+
+        function deleteItem(id) { if (!confirm('Remove?')) return; const proc = (items) => { for (let i=0; i<items.length; i++) { if (items[i].id === id) { items.splice(i,1); return true; } if (items[i].children && proc(items[i].children)) return true; } }; proc(syllabusData); save(); }
+
+        function addRootTarget() {
+            const inp = document.getElementById('subject-input'); const prio = document.getElementById('priority-input').value;
+            const start = document.getElementById('root-start').value || null; const end = document.getElementById('root-end').value || null;
+            if (!inp.value.trim()) return;
+            syllabusData.push({ id: crypto.randomUUID(), title: inp.value, completed: false, priority: parseInt(prio), children: [], notes: "", startDate: start, endDate: end, isDaily: false, repeat: 'none', createdAt: new Date().toISOString() });
+            inp.value = ''; document.getElementById('root-start').value = ''; document.getElementById('root-end').value = ''; save();
         }
+
+        // edit functions with repeat
+        function openEditModal(id) {
+            const item = findItemById(id, syllabusData); if (!item) return;
+            document.getElementById('editId').value = item.id;
+            document.getElementById('editTitle').value = item.title || '';
+            document.getElementById('editPriority').value = item.priority || 2;
+            document.getElementById('editStart').value = item.startDate || '';
+            document.getElementById('editEnd').value = item.endDate || '';
+            document.getElementById('editIsDaily').checked = item.isDaily || false;
+            document.getElementById('editRepeat').value = item.repeat || 'none';
+            document.getElementById('editNotes').value = item.notes || '';
+            document.getElementById('editModal').style.display = 'grid';
+            lucide.createIcons();
+        }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+        function saveEdit() {
+            const id = document.getElementById('editId').value;
+            const item = findItemById(id, syllabusData); if (!item) return;
+            item.title = document.getElementById('editTitle').value.trim();
+            item.priority = parseInt(document.getElementById('editPriority').value);
+            item.startDate = document.getElementById('editStart').value || null;
+            item.endDate = document.getElementById('editEnd').value || null;
+            item.isDaily = document.getElementById('editIsDaily').checked;
+            item.repeat = document.getElementById('editRepeat').value;
+            item.notes = document.getElementById('editNotes').value.trim();
+            closeEditModal(); save();
+        }
+
+        function findItemById(id, items) { for (let i of items) { if (i.id === id) return i; if (i.children) { let f = findItemById(id, i.children); if (f) return f; } } return null; }
+
+        // child modal with repeat
+        function openChildModal(parentId) { currentParentId = parentId; document.getElementById('subtargetModal').style.display = 'grid'; }
+        function closeModal() { document.getElementById('subtargetModal').style.display = 'none'; document.getElementById('subtargetForm')?.reset(); currentParentId = null; }
         function saveSubtarget() {
             const title = document.getElementById('modalTitle').value.trim();
             if (!title || !currentParentId) return;
-            const newChild = { 
-                id: crypto.randomUUID(), title, completed: false, 
-                priority: parseInt(document.getElementById('modalPriority').value), 
-                children: [], notes: document.getElementById('modalNotes').value.trim(), 
-                dueDate: document.getElementById('modalDue').value || null,
-                isDaily: document.getElementById('modalIsDaily').checked || false
+            const newChild = {
+                id: crypto.randomUUID(), title, completed: false,
+                priority: parseInt(document.getElementById('modalPriority').value),
+                children: [],
+                notes: document.getElementById('modalNotes').value.trim(),
+                startDate: document.getElementById('modalStart').value || null,
+                endDate: document.getElementById('modalEnd').value || null,
+                isDaily: document.getElementById('modalIsDaily').checked,
+                repeat: document.getElementById('modalRepeat').value,
+                createdAt: new Date().toISOString()
             };
-            const find = (items) => {
-                for (let i of items) {
-                    if (i.id === currentParentId) { i.children.push(newChild); return true; }
-                    if (i.children && find(i.children)) return true;
-                }
-            };
+            const find = (items) => { for (let i of items) { if (i.id === currentParentId) { i.children.push(newChild); return true; } if (i.children && find(i.children)) return true; } };
             find(syllabusData); closeModal(); save();
         }
 
-        function exportData() { const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(syllabusData)); const a=document.createElement('a'); a.href=dataStr; a.download="roadmap.json"; a.click(); }
-        function importData() {
-            const input = document.createElement('input'); input.type='file'; input.accept='.json';
-            input.onchange = e => {
-                const file = e.target.files[0]; const reader = new FileReader();
-                reader.onload = e => { try { syllabusData = JSON.parse(e.target.result); save(); } catch (er) { alert('Invalid json file'); } };
-                reader.readAsText(file);
-            }; input.click();
-        }
+        // export/import
+        function exportData() { const a = document.createElement('a'); a.href = 'data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(syllabusData)); a.download = 'roadmap.json'; a.click(); }
+        function importData() { const input = document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange = e => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = e => { try { syllabusData = JSON.parse(e.target.result); save(); } catch { alert('invalid'); } }; reader.readAsText(file); }; input.click(); }
 
-        // ----- RENDER MAIN ROADMAP with edit button -----
+        // render main roadmap (added completed class for focus mode)
         function generateHTML(item, isRoot=false) {
             const progress = getProgress(item);
-            const prioClass = {1:'border-l-red-500', 2:'border-l-indigo-500', 3:'border-l-cyan-500'}[item.priority] || 'border-l-indigo-500';
+            const prioClass = {1:'border-l-red-500',2:'border-l-indigo-500',3:'border-l-cyan-500'}[item.priority]||'border-l-indigo-500';
             const dailyClass = item.isDaily ? 'border border-yellow-500/30' : '';
-
-            const sortedChildren = item.children ? [...item.children].sort((a,b) => {
-                if (!a.dueDate && !b.dueDate) return 0;
-                if (!a.dueDate) return 1;
-                if (!b.dueDate) return -1;
-                return a.dueDate.localeCompare(b.dueDate);
-            }) : [];
-
-            return `
-                <div class="${isRoot ? 'mb-6' : 'mt-4 relative ml-6'}">
-                    ${!isRoot ? '<div class="nested-line"></div>' : ''}
-                    <div class="glow-card rounded-3xl p-5 border-l-4 ${prioClass} ${dailyClass} ${item.completed ? 'opacity-60 grayscale-[0.5]' : ''}">
-                        <div class="flex flex-wrap items-center justify-between gap-4">
-                            <div class="flex items-center gap-4 flex-1">
-                                <label class="cb-container cursor-pointer shrink-0">
-                                    <input type="checkbox" class="hidden" ${item.completed ? 'checked' : ''} onchange="toggleComplete('${item.id}')">
-                                    <div class="checkmark w-6 h-6 border-2 border-white/10 rounded-lg transition-all flex items-center justify-center">
-                                        <i data-lucide="check" class="w-3 h-3 text-white opacity-0"></i>
-                                    </div>
-                                </label>
-                                
-                                <div>
-                                    <h3 class="font-bold flex items-center gap-2 ${item.completed ? 'line-through text-indigo-300/40' : 'text-white'}">
-                                        ${item.title} 
-                                    </h3>
-                                    <div class="flex flex-wrap gap-3 text-[9px] uppercase font-black tracking-widest text-indigo-400/60 mt-1">
-                                        ${item.isDaily ? '<span class="text-yellow-400">⭐ DAILY TARGET</span>' : ''}
-                                        ${item.children.length > 0 ? `<span>${item.children.length} Components</span>` : ''}
-                                        ${item.dueDate ? `<span class="text-indigo-400">📅 ${item.dueDate}</span>` : ''}
-                                        ${item.notes ? '<span class="text-cyan-400">● Notes</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4 lg:gap-6 shrink-0">
-                                <div class="flex flex-col items-end">
-                                    <div class="w-24 bg-white/5 h-1.5 rounded-full overflow-hidden hidden sm:block mb-1">
-                                        <div class="h-full progress-pill transition-all duration-500" style="width:${progress}%"></div>
-                                    </div>
-                                    <span class="text-[10px] font-black text-indigo-300">${progress}%</span>
-                                </div>
-                                <div class="flex gap-1">
-                                    <button onclick="toggleDailyTarget('${item.id}')" title="Mark as Daily Target" class="p-2 rounded-xl transition-colors ${item.isDaily ? 'bg-yellow-500/20 hover:bg-yellow-500/40' : 'hover:bg-yellow-500/10'}">
-                                        <i data-lucide="star" class="w-4 h-4 ${item.isDaily ? 'text-yellow-400 fill-yellow-400' : 'text-indigo-300'}"></i>
-                                    </button>
-                                    <button onclick="openEditModal('${item.id}')" title="Edit" class="p-2 hover:bg-blue-500/20 rounded-xl">
-                                        <i data-lucide="pencil" class="w-4 h-4 text-blue-400"></i>
-                                    </button>
-                                    <button onclick="openChildModal('${item.id}')" title="Add Sub-Target" class="p-2 hover:bg-indigo-500/20 rounded-xl">
-                                        <i data-lucide="plus" class="w-4 h-4 text-indigo-300"></i>
-                                    </button>
-                                    <button onclick="deleteItem('${item.id}')" title="Delete" class="p-2 hover:bg-red-500/20 rounded-xl">
-                                        <i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i>
-                                    </button>
-                                </div>
+            const completedClass = item.completed ? 'completed-item opacity-60 grayscale-[0.5]' : '';
+            const sortedChildren = item.children ? [...item.children].sort((a,b)=> (a.startDate||'')>(b.startDate||'')?1:-1) : [];
+            return `<div class="${isRoot?'mb-6':'mt-4 relative ml-6'} ${completedClass}">${!isRoot?'<div class="nested-line"></div>':''}
+                <div class="glow-card rounded-3xl p-5 border-l-4 ${prioClass} ${dailyClass}">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-4 flex-1">
+                            <label class="cb-container cursor-pointer shrink-0"><input type="checkbox" class="hidden" ${item.completed?'checked':''} onchange="toggleComplete('${item.id}')"><div class="checkmark w-6 h-6 border-2 border-white/10 rounded-lg transition-all flex items-center justify-center"><i data-lucide="check" class="w-3 h-3 text-white opacity-0"></i></div></label>
+                            <div><h3 class="font-bold flex items-center gap-2 ${item.completed?'line-through text-indigo-300/40':'text-white'}">${item.title}</h3>
+                            <div class="flex flex-wrap gap-3 text-[9px] uppercase font-black tracking-widest text-indigo-400/60 mt-1">
+                                ${item.isDaily?'<span class="text-yellow-400">⭐ DAILY</span>':''}
+                                ${item.repeat && item.repeat!=='none' ? `<span class="text-cyan-400">⟲ ${item.repeat}</span>` : ''}
+                                ${item.children.length? `<span>${item.children.length} components</span>`:''}
+                                ${item.startDate? `<span>▶ ${item.startDate}</span>`:''} ${item.endDate? `<span>⏹ ${item.endDate}</span>`:''}
+                                ${item.notes?'<span class="text-cyan-400">● Notes</span>':''}
+                            </div></div>
+                        </div>
+                        <div class="flex items-center gap-4 lg:gap-6 shrink-0">
+                            <div class="flex flex-col items-end"><div class="w-24 bg-white/5 h-1.5 rounded-full overflow-hidden hidden sm:block mb-1"><div class="h-full progress-pill transition-all duration-500" style="width:${progress}%"></div></div><span class="text-[10px] font-black text-indigo-300">${progress}%</span></div>
+                            <div class="flex gap-1">
+                                <button onclick="toggleDailyTarget('${item.id}')" title="Daily" class="p-2 rounded-xl ${item.isDaily?'bg-yellow-500/20 hover:bg-yellow-500/40':'hover:bg-yellow-500/10'}"><i data-lucide="star" class="w-4 h-4 ${item.isDaily?'text-yellow-400 fill-yellow-400':'text-indigo-300'}"></i></button>
+                                <button onclick="openEditModal('${item.id}')" title="Edit" class="p-2 hover:bg-blue-500/20 rounded-xl"><i data-lucide="pencil" class="w-4 h-4 text-blue-400"></i></button>
+                                <button onclick="openChildModal('${item.id}')" title="Add Sub" class="p-2 hover:bg-indigo-500/20 rounded-xl"><i data-lucide="plus" class="w-4 h-4 text-indigo-300"></i></button>
+                                <button onclick="deleteItem('${item.id}')" title="Delete" class="p-2 hover:bg-red-500/20 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i></button>
                             </div>
                         </div>
-                        ${item.notes && !item.completed ? `<div class="mt-4 text-xs text-indigo-200/60 bg-black/30 p-4 rounded-2xl border border-white/5 whitespace-pre-wrap">${item.notes}</div>` : ''}
-                        
-                        ${sortedChildren.length ? `<div class="children-container">${sortedChildren.map(c => generateHTML(c)).join('')}</div>` : ''}
                     </div>
-                </div>
-            `;
+                    ${item.notes && !item.completed? `<div class="mt-4 text-xs text-indigo-200/60 bg-black/30 p-4 rounded-2xl border border-white/5">${item.notes}</div>`:''}
+                    ${sortedChildren.length? `<div class="children-container">${sortedChildren.map(c=>generateHTML(c)).join('')}</div>`:''}
+                </div></div>`;
         }
 
         function render() {
             const container = document.getElementById('roadmap-engine');
             const filtered = filterItems();
-            if (!filtered.length) {
-                container.innerHTML = `<div class="text-center py-24 border-2 border-dashed border-white/5 rounded-[3rem]"><i data-lucide="box" class="w-12 h-12 text-indigo-500/20 mx-auto mb-4"></i><p class="text-indigo-300/30 font-bold uppercase tracking-widest" data-i18n="noMatch">No modules match</p></div>`;
-            } else {
-                container.innerHTML = filtered.map(i => generateHTML(i, true)).join('');
-            }
-            document.getElementById('stat-total').innerText = (syllabusData.length ? Math.round(syllabusData.reduce((a,i)=>a+getProgress(i),0)/syllabusData.length) : 0) + '%';
+            container.innerHTML = filtered.length ? filtered.map(i=>generateHTML(i,true)).join('') : `<div class="text-center py-24 border-2 border-dashed border-white/5 rounded-[3rem]"><i data-lucide="box" class="w-12 h-12 text-indigo-500/20 mx-auto mb-4"></i><p class="text-indigo-300/30 font-bold uppercase tracking-widest">No modules match</p></div>`;
+            document.getElementById('stat-total').innerText = (syllabusData.length? Math.round(syllabusData.reduce((a,i)=>a+getProgress(i),0)/syllabusData.length):0)+'%';
             document.getElementById('stat-tasks').innerText = syllabusData.length;
-            lucide.createIcons();
+            lucide.createIcons(); updateStatsCards();
         }
 
-        function setFilter(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-chip[data-filter]').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-            render();
-        }
-
+        function setFilter(filter) { currentFilter = filter; document.querySelectorAll('.filter-chip[data-filter]').forEach(c=>c.classList.remove('active')); document.querySelector(`[data-filter="${filter}"]`).classList.add('active'); render(); }
         document.getElementById('search-input').addEventListener('input', (e) => { searchTerm = e.target.value; render(); });
 
-        // subtarget modal HTML injection
-        document.getElementById('subtargetModal').innerHTML = `<div class="glow-card max-w-lg w-[95%] rounded-[2.5rem] p-8 border-indigo-500/30 shadow-2xl">
-            <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="layers-3" class="text-indigo-400"></i> New Sub-target</h3><button onclick="closeModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div>
-            <form id="subtargetForm" onsubmit="event.preventDefault(); saveSubtarget();" class="space-y-5">
-                <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Sub-target Name</label><input type="text" id="modalTitle" required class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-indigo-500 transition" placeholder="e.g. Implement WebGL context..."></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Priority</label><select id="modalPriority" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none"><option value="1">🔥 High</option><option value="2" selected>⚡ Medium</option><option value="3">🌀 Low</option></select></div>
-                    <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Deadline</label><input type="date" id="modalDue" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white [color-scheme:dark] outline-none"></div>
-                </div>
-                <div>
-                    <label class="flex items-center gap-2 cursor-pointer bg-black/60 border border-white/10 rounded-2xl p-4 hover:border-yellow-500/50 transition">
-                        <input type="checkbox" id="modalIsDaily" class="w-4 h-4 accent-yellow-500 bg-transparent rounded">
-                        <span class="text-white text-sm font-semibold">Mark as ⭐ Daily Target</span>
-                    </label>
-                </div>
-                <div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Context & Notes</label><textarea id="modalNotes" rows="3" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white resize-none outline-none focus:border-indigo-500" placeholder="Links, steps..."></textarea></div>
-                <button type="submit" class="w-full py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all transform active:scale-[0.98]">Add to Roadmap</button>
-            </form>
-        </div>`;
+        // Timer with sound & notification
+        let timerInterval = null; let timerSeconds = 25*60; let timerRunning = false; let timerMode = 'work';
+        function openTimerModal() { document.getElementById('timerModal').style.display = 'grid'; lucide.createIcons(); requestNotificationPermission(); }
+        function closeTimerModal() { pauseTimer(); document.getElementById('timerModal').style.display = 'none'; }
+        function updateTimerDisplay() { let m = Math.floor(timerSeconds/60); let s = timerSeconds%60; document.getElementById('timer-display').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+        function playSound() {
+            const audio = new Audio('data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf38='); // tiny beep
+            audio.play().catch(()=>{});
+        }
+        function showNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body, icon: 'icon-192.png' });
+            }
+        }
+        function startTimer() {
+            if (timerRunning) return;
+            timerRunning = true;
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    playSound();
+                    if (timerMode === 'work') {
+                        timerMode = 'break';
+                        timerSeconds = 5*60;
+                        document.getElementById('timer-status').innerText = '☕ Break time';
+                        showNotification('Break time!', 'Time for a 5 minute rest.');
+                    } else {
+                        timerMode = 'work';
+                        timerSeconds = 25*60;
+                        document.getElementById('timer-status').innerText = 'Focus mode';
+                        showNotification('Work session', 'Ready to focus again?');
+                    }
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+        function pauseTimer() { clearInterval(timerInterval); timerRunning = false; }
+        function resetTimer() { pauseTimer(); timerMode = 'work'; timerSeconds = 25*60; updateTimerDisplay(); document.getElementById('timer-status').innerText = 'Ready for deep work'; }
+
+        // Keyboard shortcut: press N to focus new root input
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+                document.getElementById('subject-input').focus();
+            }
+        });
+
+        // Build subtarget modal with repeat
+        document.getElementById('subtargetModal').innerHTML = `<div class="glow-card max-w-lg w-[95%] rounded-[2.5rem] p-8 border-indigo-500/30 shadow-2xl"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="layers-3" class="text-indigo-400"></i> New Sub-target</h3><button onclick="closeModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div><form id="subtargetForm" onsubmit="event.preventDefault(); saveSubtarget();" class="space-y-5"><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Sub-target Name</label><input type="text" id="modalTitle" required class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white outline-none" placeholder="e.g. Implement..."></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Start</label><input type="date" id="modalStart" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white [color-scheme:dark]"></div><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">End</label><input type="date" id="modalEnd" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white [color-scheme:dark]"></div></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Priority</label><select id="modalPriority" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"><option value="1">🔥 High</option><option value="2" selected>⚡ Medium</option><option value="3">🌀 Low</option></select></div><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Repeat</label><select id="modalRepeat" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"><option value="none">None</option><option value="daily">Daily</option><option value="weekdays">Weekdays</option><option value="weekly">Weekly</option></select></div></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer bg-black/60 border border-white/10 rounded-2xl p-4 hover:border-yellow-500/50"><input type="checkbox" id="modalIsDaily" class="w-4 h-4 accent-yellow-500"> <span class="text-white text-sm">⭐ Daily</span></label></div><div><label class="block text-indigo-300 text-[10px] uppercase font-bold mb-2 ml-1">Notes</label><textarea id="modalNotes" rows="2" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"></textarea></div><button type="submit" class="w-full py-4 bg-indigo-600 rounded-2xl font-bold">Add</button></form></div>`;
+
+        // Edit modal with repeat
+        document.getElementById('editModal').innerHTML = `<div class="glow-card max-w-lg w-[95%] rounded-[2.5rem] p-8 border-indigo-500/30 shadow-2xl"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="pencil" class="text-indigo-400"></i> Edit target</h3><button onclick="closeEditModal()" class="text-indigo-300/50 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div><form onsubmit="event.preventDefault(); saveEdit();" class="space-y-5"><input type="hidden" id="editId"><div><input type="text" id="editTitle" required class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white" placeholder="Title"></div><div class="grid grid-cols-2 gap-4"><div><label class="text-indigo-300 text-[10px] uppercase">Start</label><input type="date" id="editStart" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"></div><div><label class="text-indigo-300 text-[10px] uppercase">End</label><input type="date" id="editEnd" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"></div></div><div class="grid grid-cols-2 gap-4"><div><select id="editPriority" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"><option value="1">🔥 High</option><option value="2">⚡ Medium</option><option value="3">🌀 Low</option></select></div><div><select id="editRepeat" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white"><option value="none">None</option><option value="daily">Daily</option><option value="weekdays">Weekdays</option><option value="weekly">Weekly</option></select></div></div><div><label class="flex items-center gap-2 bg-black/60 border border-white/10 rounded-2xl p-4"><input type="checkbox" id="editIsDaily" class="w-4 h-4"> <span class="text-white text-sm">⭐ Daily</span></label></div><div><textarea id="editNotes" rows="3" class="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white" placeholder="Notes"></textarea></div><button type="submit" class="w-full py-4 bg-indigo-600 rounded-2xl font-bold">Update</button></form></div>`;
 
         // close modals on overlay click
-        window.onclick = (e) => { 
-            if (e.target.classList.contains('modal-overlay')) { 
-                e.target.style.display='none'; 
-                currentParentId = null; 
-            } 
-        };
+        window.onclick = (e) => { if (e.target.classList.contains('modal-overlay')) { e.target.style.display='none'; currentParentId=null; } };
 
         // initial render
-        render(); 
-        renderActiveTargets(); 
-        lucide.createIcons();
+        render(); renderDailyTab(); updateStatsCards(); updateWeeklyChart(); lucide.createIcons();
 
-        // expose functions globally
-        window.toggleDailyTarget = toggleDailyTarget;
-        window.toggleComplete = toggleComplete;
-        window.deleteItem = deleteItem;
-        window.openChildModal = openChildModal;
-        window.closeModal = closeModal;
-        window.saveSubtarget = saveSubtarget;
-        window.exportData = exportData;
-        window.importData = importData;
-        window.setFilter = setFilter;
-        window.toggleAdvancedFilter = toggleAdvancedFilter;
-        window.openEditModal = openEditModal;
-        window.closeEditModal = closeEditModal;
-        window.saveEdit = saveEdit;
+        // expose globals
+        window.toggleDailyTarget = toggleDailyTarget; window.toggleComplete = toggleComplete; window.deleteItem = deleteItem; window.openChildModal = openChildModal; window.closeModal = closeModal; window.saveSubtarget = saveSubtarget; window.exportData = exportData; window.importData = importData; window.setFilter = setFilter; window.toggleAdvancedFilter = toggleAdvancedFilter; window.openEditModal = openEditModal; window.closeEditModal = closeEditModal; window.saveEdit = saveEdit; window.openTimerModal = openTimerModal; window.closeTimerModal = closeTimerModal; window.startTimer = startTimer; window.pauseTimer = pauseTimer; window.resetTimer = resetTimer; window.switchDailyTab = switchDailyTab; window.toggleLanguage = toggleLanguage; window.toggleMobileMenu = toggleMobileMenu; window.closeMobileMenu = closeMobileMenu; window.toggleFocusMode = toggleFocusMode;
     </script>
 </body>
 </html>
